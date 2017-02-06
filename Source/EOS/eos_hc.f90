@@ -104,18 +104,18 @@ module eos_module
 
       ! ****************************************************************************
 
-      subroutine nyx_eos_T_given_Re(T, Ne, R_in, e_in, a)
+      subroutine nyx_eos_T_given_Re_vec(T, Ne, R_in, e_in, a)
 
       use atomic_rates_module, ONLY: XHYDROGEN, MPROTON
       use fundamental_constants_module, only: density_to_cgs, e_to_cgs
 
       ! In/out variables
-      double precision,           intent(inout) :: T, Ne
-      double precision,           intent(in   ) :: R_in, e_in
+      double precision,           intent(inout) :: T(veclen), Ne(veclen)
+      double precision,           intent(in   ) :: R_in(veclen), e_in(veclen)
       double precision,           intent(in   ) :: a
 
-      double precision :: nh, nh0, nhep, nhp, nhe0, nhepp
-      double precision :: z, rho, U
+      double precision :: nh(veclen), nh0(veclen), nhep(veclen), nhp(veclen), nhe0(veclen), nhepp(veclen)
+      double precision :: z, rho(veclen), U(veclen)
 
       ! This converts from code units to CGS
       rho = R_in * density_to_cgs / a**3
@@ -159,9 +159,9 @@ module eos_module
 
       integer :: i
 
-      double precision, intent (in   ) :: z, U, nh
-      double precision, intent (inout) :: ne
-      double precision, intent (  out) :: t, nh0, nhp, nhe0, nhep, nhepp
+      double precision, intent (in   ) :: z, U(veclen), nh(veclen)
+      double precision, intent (inout) :: ne(veclen)
+      double precision, intent (  out) :: t(veclen), nh0(veclen), nhp(veclen), nhe0(veclen), nhep(veclen), nhepp(veclen)
 
       double precision, parameter :: xacc = 1.0d-6
 
@@ -227,23 +227,27 @@ module eos_module
                                      GammaeH0, GammaeHe0, GammaeHep, &
                                      ggh0, gghe0, gghep
 
-      double precision, intent(in   ) :: U, nh, ne
-      double precision, intent(  out) :: nhp, nhep, nhepp, t
+      double precision, intent(in   ) :: U(velen), nh(veclen), ne(veclen)
+      double precision, intent(  out) :: nhp(veclen), nhep(veclen), nhepp(veclen), t(veclen)
       double precision :: ahp, ahep, ahepp, ad, geh0, gehe0, gehep
       double precision :: ggh0ne, gghe0ne, gghepne
-      double precision :: mu, tmp, logT, flo, fhi
+      double precision :: mu(veclen), tmp, logT(veclen), flo, fhi
       double precision :: smallest_val
       integer :: j
+      logical :: ionized(veclen)
 
       mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne)
       t  = gamma_minus_1*MPROTON/BOLTZMANN * U * mu
 
       logT = dlog10(t)
+
+      ionized = .false.
+
       if (logT .ge. TCOOLMAX) then ! Fully ionized plasma
          nhp   = 1.0d0
          nhep  = 0.0d0
          nhepp = YHELIUM
-         return
+         ionized = .true.
       endif
 
       ! Temperature floor
