@@ -36,6 +36,7 @@ module atomic_rates_module
   double precision, public, save :: this_z, ggh0, gghe0, gghep, eh0, ehe0, ehep
  
   double precision, parameter, public :: TCOOLMIN = 0.0d0, TCOOLMAX = 9.0d0  ! in log10
+  double precision, parameter, public :: TCOOLMIN_R = 10**TCOOLMIN, TCOOLMAX_R = 10**9.0d0  ! in log10
   double precision, parameter, public :: deltaT = (TCOOLMAX - TCOOLMIN)/NCOOLTAB
 
   double precision, parameter, public :: MPROTON = 1.6726231d-24, BOLTZMANN = 1.3806e-16

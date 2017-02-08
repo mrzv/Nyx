@@ -12,8 +12,8 @@ module eos_module
   implicit none
 
   ! Routines:
-  public  :: nyx_eos_given_RT, nyx_eos_T_given_Re, eos_init_small_pres
-  public  :: nyx_eos_nh0_and_nhep, iterate_ne
+  public  :: nyx_eos_given_RT, nyx_eos_T_given_Re, nyx_eos_T_given_Re_vec, eos_init_small_pres
+  public  :: nyx_eos_nh0_and_nhep, iterate_ne, iterate_ne_vec
   private :: ion_n
 
   contains
@@ -82,34 +82,39 @@ module eos_module
 
      ! ****************************************************************************
 
-      subroutine nyx_eos_given_RT(e, P, R, T, Ne, a)
+      subroutine nyx_eos_given_RT_vec(e, P, R, T, Ne, a, veclen)
 
         use atomic_rates_module, ONLY: YHELIUM
         use fundamental_constants_module, only: mp_over_kb
         use meth_params_module, only: gamma_minus_1
         implicit none
 
-        double precision,          intent(  out) :: e, P
-        double precision,          intent(in   ) :: R, T, Ne
+        integer, intent(in) :: veclen
+        double precision,          intent(  out) :: e(veclen), P(veclen)
+        double precision,          intent(in   ) :: R(veclen), T(veclen), Ne(veclen)
         double precision,          intent(in   ) :: a
 
-        double precision :: mu
+        double precision :: mu(veclen)
+        integer :: i
 
-        mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+Ne)
-        e  = T / (gamma_minus_1 * mp_over_kB * mu)
+        do i = 1, veclen
+          mu(i) = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+Ne(i))
+          e(i)  = T(i) / (gamma_minus_1 * mp_over_kB * mu(i))
+  
+          P(i)  = gamma_minus_1 * R(i) * e(i)
+        end do
 
-        P  = gamma_minus_1 * R * e
-
-      end subroutine nyx_eos_given_RT
+      end subroutine nyx_eos_given_RT_vec
 
       ! ****************************************************************************
 
-      subroutine nyx_eos_T_given_Re_vec(T, Ne, R_in, e_in, a)
+      subroutine nyx_eos_T_given_Re_vec(T, Ne, R_in, e_in, a, veclen)
 
       use atomic_rates_module, ONLY: XHYDROGEN, MPROTON
       use fundamental_constants_module, only: density_to_cgs, e_to_cgs
 
       ! In/out variables
+      integer, intent(in) :: veclen
       double precision,           intent(inout) :: T(veclen), Ne(veclen)
       double precision,           intent(in   ) :: R_in(veclen), e_in(veclen)
       double precision,           intent(in   ) :: a
@@ -124,9 +129,9 @@ module eos_module
 
       z   = 1.d0/a - 1.d0
 
-      call iterate_ne(z, U, T, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
+      call iterate_ne_vec(z, U, T, nh, ne, nh0, nhp, nhe0, nhep, nhepp, veclen)
 
-      end subroutine nyx_eos_T_given_Re
+      end subroutine nyx_eos_T_given_Re_vec
 
       ! ****************************************************************************
 
@@ -153,15 +158,290 @@ module eos_module
 
       ! ****************************************************************************
 
+      subroutine iterate_ne_vec(z, U, t, nh, ne, nh0, nhp, nhe0, nhep, nhepp, veclen)
+
+      use atomic_rates_module, ONLY: this_z, YHELIUM, BOLTZMANN, MPROTON, TCOOLMAX_R
+      use meth_params_module, only: gamma_minus_1
+
+      integer :: i
+
+      integer, intent(in) :: veclen
+      double precision, intent (in   ) :: z, U(veclen), nh(veclen)
+      double precision, intent (inout) :: ne(veclen)
+      double precision, intent (  out) :: t(veclen), nh0(veclen), nhp(veclen), nhe0(veclen), nhep(veclen), nhepp(veclen)
+
+      double precision, parameter :: xacc = 1.0d-6
+
+      double precision :: f(veclen), df(veclen), eps(veclen), mu(veclen)
+      double precision :: nhp_plus(veclen), nhep_plus(veclen), nhepp_plus(veclen)
+      double precision :: dnhp_dne(veclen), dnhep_dne(veclen), dnhepp_dne(veclen), dne(veclen)
+      double precision :: U_in(veclen), t_in(veclen), nh_in(veclen), ne_in(veclen)
+      double precision :: nhp_out(veclen), nhep_out(veclen), nhepp_out(veclen)
+      integer :: vec_count = 0, orig_idx(veclen)
+      integer :: ii
+
+      ! Check if we have interpolated to this z
+      if (abs(z-this_z) .gt. xacc*z) &
+          STOP 'iterate_ne(): Wrong redshift!'
+
+      ii = 0
+      ne = 1.0d0 ! 0 is a bad guess
+      do  ! Newton-Raphson solver
+         ii = ii + 1
+
+         ! Ion number densities
+         do i = 1, veclen
+           mu(i) = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne(i))
+           t(i)  = gamma_minus_1*MPROTON/BOLTZMANN * U(i) * mu(i)
+         end do
+         vec_count = 0
+         do i = 1, veclen
+           if (t(i) .ge. TCOOLMAX_R) then ! Fully ionized plasma
+             nhp(i)   = 1.0d0
+             nhep(i)  = 0.0d0
+             nhepp(i) = YHELIUM
+           else
+             vec_count = vec_count + 1
+             U_in(vec_count) = U(i)
+             t_in(vec_count) = t(i)
+             nh_in(vec_count) = nh(i)
+             ne_in(vec_count) = ne(i)
+             orig_idx(vec_count) = i
+           endif
+         end do
+         call ion_n_vec(U_in(1:vec_count), &
+                    t_in(1:vec_count), &
+                    nh_in(1:vec_count), &
+                    ne_in(1:vec_count), &
+                    nhp_out(1:vec_count), &
+                    nhep_out(1:vec_count), &
+                    nhepp_out(1:vec_count), &
+                    vec_count)
+         nhp(orig_idx(1:vec_count)) = nhp_out(1:vec_count)
+         nhep(orig_idx(1:vec_count)) = nhep_out(1:vec_count)
+         nhepp(orig_idx(1:vec_count)) = nhepp_out(1:vec_count)
+
+         ! Forward difference derivatives
+         do i = 1, veclen
+           if (ne(i) .gt. 0.0d0) then
+              eps(i) = xacc*ne(i)
+           else
+              eps(i) = 1.0d-24
+           endif
+         end do
+         do i = 1, vec_count
+           mu(i) = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne(i)+eps(i))
+           t(i)  = gamma_minus_1*MPROTON/BOLTZMANN * U(i) * mu(i)
+         end do
+         vec_count = 0
+         do i = 1, veclen
+           if (t(i) .ge. TCOOLMAX_R) then ! Fully ionized plasma
+             nhp(i)   = 1.0d0
+             nhep(i)  = 0.0d0
+             nhepp(i) = YHELIUM
+           else
+             vec_count = vec_count + 1
+             U_in(vec_count) = U(i)
+             nh_in(vec_count) = nh(i)
+             ne_in(vec_count) = ne(i)+eps(i)
+             orig_idx(vec_count) = i
+           endif
+         end do
+         call ion_n_vec(U_in(1:vec_count), &
+                    t_in(1:vec_count), &
+                    nh_in(1:vec_count), &
+                    ne_in(1:vec_count), &
+                    nhp_out(1:vec_count), &
+                    nhep_out(1:vec_count), &
+                    nhepp_out(1:vec_count), &
+                    vec_count)
+         nhp(orig_idx(1:vec_count)) = nhp_out(1:vec_count)
+         nhep(orig_idx(1:vec_count)) = nhep_out(1:vec_count)
+         nhepp(orig_idx(1:vec_count)) = nhepp_out(1:vec_count)
+
+         do i = 1, veclen
+           dnhp_dne(i)   = (nhp_plus(i)   - nhp(i))   / eps(i)
+           dnhep_dne(i)  = (nhep_plus(i)  - nhep(i))  / eps(i)
+           dnhepp_dne(i) = (nhepp_plus(i) - nhepp(i)) / eps(i)
+         end do
+
+         do i = 1, veclen
+           f(i)   = ne(i) - nhp(i) - nhep(i) - 2.0d0*nhepp(i)
+           df(i)  = 1.0d0 - dnhp_dne(i) - dnhep_dne(i) - 2.0d0*dnhepp_dne(i)
+           dne(i) = f(i)/df(i)
+         end do
+
+         do i = 1, veclen
+           ne(i) = max((ne(i)-dne(i)), 0.0d0)
+         end do
+
+         do i = 1, veclen
+           if (maxval(abs(dne(1:veclen))) < xacc) exit
+         end do
+
+!         if (i .gt. 13) &
+!            print*, "ITERATION: ", i, " NUMBERS: ", z, t, ne, nhp, nhep, nhepp, df
+         if (ii .gt. 15) &
+            STOP 'iterate_ne(): No convergence in Newton-Raphson!'
+
+      enddo
+
+      ! Get rates for the final ne
+      do i = 1, veclen
+        mu(i) = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne(i))
+        t(i)  = gamma_minus_1*MPROTON/BOLTZMANN * U(i) * mu(i)
+      end do
+      vec_count = 0
+      do i = 1, veclen
+        if (t(i) .ge. TCOOLMAX_R) then ! Fully ionized plasma
+          nhp(i)   = 1.0d0
+          nhep(i)  = 0.0d0
+          nhepp(i) = YHELIUM
+        else
+          vec_count = vec_count + 1
+          U_in(vec_count) = U(i)
+          nh_in(vec_count) = nh(i)
+          ne_in(vec_count) = ne(i)
+          orig_idx(vec_count) = i
+        endif
+      end do
+      call ion_n_vec(U_in(1:vec_count), &
+                 t_in(1:vec_count), &
+                 nh_in(1:vec_count), &
+                 ne_in(1:vec_count), &
+                 nhp_out(1:vec_count), &
+                 nhep_out(1:vec_count), &
+                 nhepp_out(1:vec_count), &
+                 vec_count)
+      nhp(orig_idx(1:vec_count)) = nhp_out(1:vec_count)
+      nhep(orig_idx(1:vec_count)) = nhep_out(1:vec_count)
+      nhepp(orig_idx(1:vec_count)) = nhepp_out(1:vec_count)
+
+      ! Neutral fractions:
+      do i = 1, veclen
+        nh0(i)   = 1.0d0 - nhp(i)
+        nhe0(i)  = YHELIUM - (nhep(i) + nhepp(i))
+      end do
+      end subroutine iterate_ne_vec
+
+      ! ****************************************************************************
+
+      subroutine ion_n_vec(U, t, nh, ne, nhp, nhep, nhepp, vec_count)
+
+      use atomic_rates_module, ONLY: YHELIUM, MPROTON, BOLTZMANN, &
+                                     TCOOLMIN, TCOOLMAX, NCOOLTAB, deltaT, &
+                                     AlphaHp, AlphaHep, AlphaHepp, Alphad, &
+                                     GammaeH0, GammaeHe0, GammaeHep, &
+                                     ggh0, gghe0, gghep
+
+      integer, intent(in) :: vec_count
+      double precision, intent(in   ) :: U(vec_count), t(vec_count), nh(vec_count), ne(vec_count)
+      double precision, intent(  out) :: nhp(vec_count), nhep(vec_count), nhepp(vec_count)
+      double precision :: ahp(vec_count), ahep(vec_count), ahepp(vec_count), ad(vec_count), geh0(vec_count), gehe0(vec_count), gehep(vec_count)
+      double precision :: ggh0ne(vec_count), gghe0ne(vec_count), gghepne(vec_count)
+      double precision :: tmp(vec_count), logT(vec_count), flo(vec_count), fhi(vec_count)
+      double precision :: smallest_val
+      integer :: j(vec_count), i
+
+      logT(1:vec_count) = dlog10(t(1:vec_count))
+
+      ! Temperature floor
+      do i = 1, vec_count
+        if (logT(i) .le. TCOOLMIN) logT(i) = TCOOLMIN + 0.5d0*deltaT
+      end do
+
+      ! Interpolate rates
+      do i = 1, vec_count
+        tmp(i) = (logT(i)-TCOOLMIN)/deltaT
+        j(i) = int(tmp(i))
+        fhi(i) = tmp(i) - j(i)
+        flo(i) = 1.0d0 - fhi(i)
+        j(i) = j(i) + 1 ! F90 arrays start with 1
+      end do
+
+      do i = 1, vec_count
+        ahp(i)   = flo(i)*AlphaHp  (j(i)) + fhi(i)*AlphaHp  (j(i)+1)
+        ahep(i)  = flo(i)*AlphaHep (j(i)) + fhi(i)*AlphaHep (j(i)+1)
+        ahepp(i) = flo(i)*AlphaHepp(j(i)) + fhi(i)*AlphaHepp(j(i)+1)
+        ad(i)    = flo(i)*Alphad   (j(i)) + fhi(i)*Alphad   (j(i)+1)
+        geh0(i)  = flo(i)*GammaeH0 (j(i)) + fhi(i)*GammaeH0 (j(i)+1)
+        gehe0(i) = flo(i)*GammaeHe0(j(i)) + fhi(i)*GammaeHe0(j(i)+1)
+        gehep(i) = flo(i)*GammaeHep(j(i)) + fhi(i)*GammaeHep(j(i)+1)
+      end do
+
+      do i = 1, vec_count
+        if (ne(i) .gt. 0.0d0) then
+           ggh0ne(i)   = ggh0 /(ne(i)*nh(i))
+           gghe0ne(i)  = gghe0/(ne(i)*nh(i))
+           gghepne(i)  = gghep/(ne(i)*nh(i))
+        else
+           ggh0ne(i)   = 0.0d0
+           gghe0ne(i)  = 0.0d0
+           gghepne(i)  = 0.0d0
+        endif
+      end do
+
+      ! H+
+      do i = 1, vec_count
+        nhp(i) = 1.0d0 - ahp(i)/(ahp(i) + geh0(i) + ggh0ne(i))
+      end do
+
+      ! He+
+      smallest_val = Tiny(1.0d0)
+      do i = 1, vec_count
+        if ((gehe0(i) + gghe0ne(i)) .gt. smallest_val) then
+  
+           nhep(i)  = YHELIUM/(1.0d0 + (ahep(i)  + ad(i)     )/(gehe0(i) + gghe0ne(i)) &
+                                  + (gehep(i) + gghepne(i))/ahepp(i))
+        else
+           nhep(i)  = 0.0d0
+        endif
+      end do
+
+      ! He++
+      do i = 1, vec_count
+        if (nhep(i) .gt. 0.0d0) then
+           nhepp(i) = nhep(i)*(gehep(i) + gghepne(i))/ahepp(i)
+        else
+           nhepp(i) = 0.0d0
+        endif
+      end do
+
+      end subroutine ion_n_vec
+
+      subroutine nyx_eos_T_given_Re(T, Ne, R_in, e_in, a)
+
+      use atomic_rates_module, ONLY: XHYDROGEN, MPROTON
+      use fundamental_constants_module, only: density_to_cgs, e_to_cgs
+
+      ! In/out variables
+      double precision,           intent(inout) :: T, Ne
+      double precision,           intent(in   ) :: R_in, e_in
+      double precision,           intent(in   ) :: a
+
+      double precision :: nh, nh0, nhep, nhp, nhe0, nhepp
+      double precision :: z, rho, U
+
+      ! This converts from code units to CGS
+      rho = R_in * density_to_cgs / a**3
+        U = e_in * e_to_cgs
+      nh  = rho*XHYDROGEN/MPROTON
+
+      z   = 1.d0/a - 1.d0
+
+      call iterate_ne(z, U, T, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
+
+      end subroutine nyx_eos_T_given_Re
+
       subroutine iterate_ne(z, U, t, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
 
       use atomic_rates_module, ONLY: this_z, YHELIUM
 
       integer :: i
 
-      double precision, intent (in   ) :: z, U(veclen), nh(veclen)
-      double precision, intent (inout) :: ne(veclen)
-      double precision, intent (  out) :: t(veclen), nh0(veclen), nhp(veclen), nhe0(veclen), nhep(veclen), nhepp(veclen)
+      double precision, intent (in   ) :: z, U, nh
+      double precision, intent (inout) :: ne
+      double precision, intent (  out) :: t, nh0, nhp, nhe0, nhep, nhepp
 
       double precision, parameter :: xacc = 1.0d-6
 
@@ -216,8 +496,6 @@ module eos_module
       nhe0  = YHELIUM - (nhep + nhepp)
       end subroutine iterate_ne
 
-      ! ****************************************************************************
-
       subroutine ion_n(U, nh, ne, nhp, nhep, nhepp, t)
 
       use meth_params_module, only: gamma_minus_1
@@ -227,27 +505,23 @@ module eos_module
                                      GammaeH0, GammaeHe0, GammaeHep, &
                                      ggh0, gghe0, gghep
 
-      double precision, intent(in   ) :: U(velen), nh(veclen), ne(veclen)
-      double precision, intent(  out) :: nhp(veclen), nhep(veclen), nhepp(veclen), t(veclen)
+      double precision, intent(in   ) :: U, nh, ne
+      double precision, intent(  out) :: nhp, nhep, nhepp, t
       double precision :: ahp, ahep, ahepp, ad, geh0, gehe0, gehep
       double precision :: ggh0ne, gghe0ne, gghepne
-      double precision :: mu(veclen), tmp, logT(veclen), flo, fhi
+      double precision :: mu, tmp, logT, flo, fhi
       double precision :: smallest_val
       integer :: j
-      logical :: ionized(veclen)
 
       mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne)
       t  = gamma_minus_1*MPROTON/BOLTZMANN * U * mu
 
       logT = dlog10(t)
-
-      ionized = .false.
-
       if (logT .ge. TCOOLMAX) then ! Fully ionized plasma
          nhp   = 1.0d0
          nhep  = 0.0d0
          nhepp = YHELIUM
-         ionized = .true.
+         return
       endif
 
       ! Temperature floor
@@ -299,5 +573,28 @@ module eos_module
       endif
 
       end subroutine ion_n
+
+
+      subroutine nyx_eos_given_RT(e, P, R, T, Ne, a)
+
+        use atomic_rates_module, ONLY: YHELIUM
+        use fundamental_constants_module, only: mp_over_kb
+        use meth_params_module, only: gamma_minus_1
+        implicit none
+
+        double precision,          intent(  out) :: e, P
+        double precision,          intent(in   ) :: R, T, Ne
+        double precision,          intent(in   ) :: a
+
+        double precision :: mu
+
+        mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+Ne)
+        e  = T / (gamma_minus_1 * mp_over_kB * mu)
+
+        P  = gamma_minus_1 * R * e
+
+      end subroutine nyx_eos_given_RT
+
+
 
 end module eos_module

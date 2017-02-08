@@ -23,8 +23,13 @@
 
       integer          :: i,j,k
       double precision :: rhoInv,eint
-      double precision :: ke,dummy_pres
+      double precision :: ke(hi(1)-lo(1)+1),dummy_pres(hi(1)-lo(1)+1)
       double precision :: z
+      double precision :: eos_inputs_pos_ueint(hi(1)-lo(1)+1,4)
+      double precision :: eos_inputs_neg_ueint(hi(1)-lo(1)+1,4)
+      integer :: orig_indices(hi(1)-lo(1)+1,3)
+      integer :: pos_eos_count, neg_eos_count
+      double precision :: small_temp_vec(hi(1)-lo(1)+1)
 
       z = 1.d0/comoving_a - 1.d0
 
@@ -41,7 +46,8 @@
                   print *,'>>> Error: compute_temp ',i,j,k
                   print *,'>>> ... negative density ',state(i,j,k,URHO)
                   print *,'    '
-                  call bl_error("Error:: compute_temp_3d.f90 :: compute_temp")
+                  call bl_error("Error:: compute_temp_3d.f90 &
+                                &:: compute_temp")
                end if
             enddo
          enddo
@@ -60,76 +66,58 @@
 
                    pos_eos_count = pos_eos_count + 1
 
-                   eos_inputs_pos_ueint(pos_eos_count:1) = diag_eos(i,j,k,TEMP_COMP)
-                   eos_inputs_pos_ueint(pos_eos_count:2) = diag_eos(i,j,k,NE_COMP)
-                   eos_inputs_pos_ueint(pos_eos_count:3) = state(i,j,k,URHO)
-                   eos_inputs_pos_ueint(pos_eos_count:4) = state(i,j,k,UEINT)*rhoInv
+                   eos_inputs_pos_ueint(pos_eos_count,1) = diag_eos(i,j,k,TEMP_COMP)
+                   eos_inputs_pos_ueint(pos_eos_count,2) = diag_eos(i,j,k,NE_COMP)
+                   eos_inputs_pos_ueint(pos_eos_count,3) = state(i,j,k,URHO)
+                   eos_inputs_pos_ueint(pos_eos_count,4) = state(i,j,k,UEINT)*rhoInv
 
-                   orig_indices(pos_eos_count:1) = i
-                   orig_indices(pos_eos_count:2) = j
-                   orig_indices(pos_eos_count:3) = k
+                   orig_indices(pos_eos_count,1) = i
+                   orig_indices(pos_eos_count,2) = j
+                   orig_indices(pos_eos_count,3) = k
 
                else
 
                    neg_eos_count = neg_eos_count + 1
 
-                   eos_inputs_neg_ueint(neg_eos_count:1) = diag_eos(i,j,k,TEMP_COMP)
-                   eos_inputs_neg_ueint(neg_eos_count:2) = diag_eos(i,j,k,NE_COMP)
-                   eos_inputs_neg_ueint(neg_eos_count:3) = state(i,j,k,URHO)
-                   eos_inputs_neg_ueint(neg_eos_count:4) = state(i,j,k,UEINT)
+                   eos_inputs_neg_ueint(neg_eos_count,1) = diag_eos(i,j,k,TEMP_COMP) ! DON'T NEED THIS; GET RID OF IT
+                   eos_inputs_neg_ueint(neg_eos_count,2) = diag_eos(i,j,k,NE_COMP)
+                   eos_inputs_neg_ueint(neg_eos_count,3) = state(i,j,k,URHO)
+                   eos_inputs_neg_ueint(neg_eos_count,4) = state(i,j,k,UEINT)
 
-                   orig_indices(neg_eos_count:1) = i
-                   orig_indices(neg_eos_count:2) = j
-                   orig_indices(neg_eos_count:3) = k
+                   orig_indices(neg_eos_count,1) = i
+                   orig_indices(neg_eos_count,2) = j
+                   orig_indices(neg_eos_count,3) = k
 
                end if
              end do
 
              ! For cells with positive E_int
-             call nyx_eos_T_given_Re_vec(eos_inputs_pos_euint(1:pos_eos_count,1), &
-                                         eos_inputs_pos_euint(1:pos_eos_count,2), &
-                                         eos_inputs_pos_euint(1:pos_eos_count,3), &
-                                         eos_inputs_pos_euint(1:pos_eos_count,4), &
-                                         comoving_a)
-             diag_eos(orig_indices(1:pos_eos_count),j,k,TEMP_COMP) = eos_inputs_pos_euint(1:pos_eos_count)
-             diag_eos(orig_indices(1:pos_eos_count),j,k,NE_COMP)   = eos_inputs_pos_euint(2:pos_eos_count)
+             call nyx_eos_T_given_Re_vec(eos_inputs_pos_ueint(1:pos_eos_count,1), &
+                                         eos_inputs_pos_ueint(1:pos_eos_count,2), &
+                                         eos_inputs_pos_ueint(1:pos_eos_count,3), &
+                                         eos_inputs_pos_ueint(1:pos_eos_count,4), &
+                                         comoving_a, &
+                                         pos_eos_count)
+             diag_eos(orig_indices(1:pos_eos_count,1),j,k,TEMP_COMP) = eos_inputs_pos_ueint(1:pos_eos_count,1)
+             diag_eos(orig_indices(1:pos_eos_count,1),j,k,NE_COMP)   = eos_inputs_pos_ueint(1:pos_eos_count,2)
 
              ! For cells with negative E_int
-             call nyx_eos_given_RT(eos_inputs_neg_ueint(neg_eos_count:4), &
-                                   dummy_pres, &
-                                   eos_inputs_neg_ueint(neg_eos_count:3), &
-                                   small_temp, &
-                                   eos_inputs_neg_ueint(neg_eos_count:2), &
-                                   comoving_a)
+             call nyx_eos_given_RT_vec(eos_inputs_neg_ueint(1:neg_eos_count,4), &
+                                   dummy_pres(1:neg_eos_count), &
+                                   eos_inputs_neg_ueint(1:neg_eos_count,3), &
+                                   small_temp_vec(1:neg_eos_count), &
+                                   eos_inputs_neg_ueint(1:neg_eos_count,2), &
+                                   comoving_a, &
+                                   neg_eos_count)
 
-             ke = 0.5d0 * (state(orig_indices(1:neg_eos_count),j,k,UMX)*state(orig_indices(1:neg_eos_count),j,k,UMX) + &
-                           state(orig_indices(1:neg_eos_count),j,k,UMY)*state(orig_indices(1:neg_eos_count),j,k,UMY) + &
-                           state(orig_indices(1:neg_eos_count),j,k,UMZ)*state(orig_indices(1:neg_eos_count),j,k,UMZ)) * rhoInv
+             ke(1:neg_eos_count) = 0.5d0 * (state(orig_indices(1:neg_eos_count,1),j,k,UMX)*state(orig_indices(1:neg_eos_count,1),j,k,UMX) + &
+                                   state(orig_indices(1:neg_eos_count,1),j,k,UMY)*state(orig_indices(1:neg_eos_count,1),j,k,UMY) + &
+                                   state(orig_indices(1:neg_eos_count,1),j,k,UMZ)*state(orig_indices(1:neg_eos_count,1),j,k,UMZ)) * rhoInv
 
-             diag_eos(orig_indices(1:neg_eos_count),j,k,TEMP_COMP) = small_temp
-             !!!!!! GOT THIS FAR
-             state(i,j,k,UEINT) = state(i,j,k,URHO) * eint
-             state(i,j,k,UEDEN) = state(i,j,k,UEINT) + ke
+             diag_eos(orig_indices(1:neg_eos_count,1),j,k,TEMP_COMP) = small_temp_vec(1:neg_eos_count)
+             state(orig_indices(1:neg_eos_count,1),j,k,UEINT) = eos_inputs_neg_ueint(1:neg_eos_count,3) * eos_inputs_neg_ueint(1:neg_eos_count,4)
+             state(orig_indices(1:neg_eos_count,1),j,k,UEDEN) = eos_inputs_neg_ueint(1:neg_eos_count,4) + ke(1:neg_eos_count)
 
-
-               else
-                  if (print_fortran_warnings .gt. 0) then
-                     print *,'   '
-                     print *,'>>> Warning: (rho e) is negative in compute_temp: ',i,j,k
-                  end if
-                   ! Set temp to small_temp and compute corresponding internal energy
-                   call nyx_eos_given_RT(eint, dummy_pres, state(i,j,k,URHO), small_temp, &
-                                         diag_eos(i,j,k,NE_COMP), comoving_a)
-
-                   ke = 0.5d0 * (state(i,j,k,UMX)**2 + state(i,j,k,UMY)**2 + state(i,j,k,UMZ)**2) * rhoInv
-
-                   diag_eos(i,j,k,TEMP_COMP) = small_temp
-                   state(i,j,k,UEINT) = state(i,j,k,URHO) * eint
-                   state(i,j,k,UEDEN) = state(i,j,k,UEINT) + ke
-
-               end if
-
-            enddo
          enddo
       enddo
 
