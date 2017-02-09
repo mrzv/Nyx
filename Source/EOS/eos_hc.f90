@@ -177,15 +177,18 @@ module eos_module
       double precision :: dnhp_dne(veclen), dnhep_dne(veclen), dnhepp_dne(veclen), dne(veclen)
       double precision :: U_in(veclen), t_in(veclen), nh_in(veclen), ne_in(veclen)
       double precision :: nhp_out(veclen), nhep_out(veclen), nhepp_out(veclen)
-      integer :: vec_count = 0, orig_idx(veclen)
+      integer :: vec_count, orig_idx(veclen)
       integer :: ii
+      logical :: done
 
       ! Check if we have interpolated to this z
       if (abs(z-this_z) .gt. xacc*z) &
           STOP 'iterate_ne(): Wrong redshift!'
 
       ii = 0
-      ne = 1.0d0 ! 0 is a bad guess
+      ne(1:veclen) = 1.0d0 ! 0 is a bad guess
+
+      done = .false.
       do  ! Newton-Raphson solver
          ii = ii + 1
 
@@ -209,6 +212,7 @@ module eos_module
              orig_idx(vec_count) = i
            endif
          end do
+
          call ion_n_vec(U_in(1:vec_count), &
                     t_in(1:vec_count), &
                     nh_in(1:vec_count), &
@@ -229,24 +233,26 @@ module eos_module
               eps(i) = 1.0d-24
            endif
          end do
-         do i = 1, vec_count
+         do i = 1, veclen
            mu(i) = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne(i)+eps(i))
            t(i)  = gamma_minus_1*MPROTON/BOLTZMANN * U(i) * mu(i)
          end do
          vec_count = 0
          do i = 1, veclen
            if (t(i) .ge. TCOOLMAX_R) then ! Fully ionized plasma
-             nhp(i)   = 1.0d0
-             nhep(i)  = 0.0d0
-             nhepp(i) = YHELIUM
+             nhp_plus(i)   = 1.0d0
+             nhep_plus(i)  = 0.0d0
+             nhepp_plus(i) = YHELIUM
            else
              vec_count = vec_count + 1
              U_in(vec_count) = U(i)
+             t_in(vec_count) = t(i)
              nh_in(vec_count) = nh(i)
              ne_in(vec_count) = ne(i)+eps(i)
              orig_idx(vec_count) = i
            endif
          end do
+
          call ion_n_vec(U_in(1:vec_count), &
                     t_in(1:vec_count), &
                     nh_in(1:vec_count), &
@@ -255,9 +261,9 @@ module eos_module
                     nhep_out(1:vec_count), &
                     nhepp_out(1:vec_count), &
                     vec_count)
-         nhp(orig_idx(1:vec_count)) = nhp_out(1:vec_count)
-         nhep(orig_idx(1:vec_count)) = nhep_out(1:vec_count)
-         nhepp(orig_idx(1:vec_count)) = nhepp_out(1:vec_count)
+         nhp_plus(orig_idx(1:vec_count)) = nhp_out(1:vec_count)
+         nhep_plus(orig_idx(1:vec_count)) = nhep_out(1:vec_count)
+         nhepp_plus(orig_idx(1:vec_count)) = nhepp_out(1:vec_count)
 
          do i = 1, veclen
            dnhp_dne(i)   = (nhp_plus(i)   - nhp(i))   / eps(i)
@@ -276,8 +282,9 @@ module eos_module
          end do
 
          do i = 1, veclen
-           if (maxval(abs(dne(1:veclen))) < xacc) exit
+           if (maxval(abs(dne(1:veclen))) < xacc) done = .true.
          end do
+         if (done) exit
 
 !         if (i .gt. 13) &
 !            print*, "ITERATION: ", i, " NUMBERS: ", z, t, ne, nhp, nhep, nhepp, df
@@ -300,6 +307,7 @@ module eos_module
         else
           vec_count = vec_count + 1
           U_in(vec_count) = U(i)
+          t_in(vec_count) = t(i)
           nh_in(vec_count) = nh(i)
           ne_in(vec_count) = ne(i)
           orig_idx(vec_count) = i
