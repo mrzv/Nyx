@@ -2108,6 +2108,7 @@ Nyx::compute_new_temp ()
 
     Real a = get_comoving_a(cur_time);
 
+     const Real t1 = ParallelDescriptor::second();
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
@@ -2120,6 +2121,10 @@ Nyx::compute_new_temp ()
             BL_TO_FORTRAN(S_new[mfi]),
             BL_TO_FORTRAN(D_new[mfi]), &a,
              &print_fortran_warnings);
+    }
+    const Real dt_compute_temp = ParallelDescriptor::second() - t1;
+    if (ParallelDescriptor::IOProcessor()) {
+      std::cout << "Time in compute_temp: " << dt_compute_temp << std::endl;
     }
 
     // Compute the maximum temperature
