@@ -202,11 +202,16 @@ Nyx::hydro_setup()
       Ne_comp = 1;
     if (inhomo_reion > 0)
     {
-        NDIAG_C  = 3;
+        NDIAG_C  = 4;
         Zhi_comp = 2;
+	tmp_comp = 3;
     } else {
-        NDIAG_C  = 2;
+        NDIAG_C  = 3;
+	tmp_comp = 2;
     }
+
+    // Add extra diag variable
+    NDIAG_C = NDIAG_C+1;
 
     int dm = BL_SPACEDIM;
 
@@ -396,7 +401,14 @@ Nyx::hydro_setup()
     if (inhomo_reion > 0) {
        desc_lst.setComponent(DiagEOS_Type, 2, "Z_HI", bc,
                              BndryFunc(generic_fill));
+       desc_lst.setComponent(DiagEOS_Type, 3, "Tmp", bc,
+                          BndryFunc(generic_fill));
     }
+    else
+      {
+    desc_lst.setComponent(DiagEOS_Type, 2, "Tmp", bc,
+                          BndryFunc(generic_fill));
+      }
 
 #ifdef GRAVITY
     if (do_grav)

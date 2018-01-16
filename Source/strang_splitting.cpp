@@ -44,6 +44,10 @@ Nyx::strang_first_step (Real time, Real dt, MultiFab& S_old, MultiFab& D_old)
 #endif
 
     }
+    //    Nyx::writeMultiFabAsPlotFile("test",
+    //				     D_old,
+    //				     "diag_eos")
+    
 }
 
 void

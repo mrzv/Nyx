@@ -13,7 +13,7 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
                                      eh0, ehe0, ehep
 
       use vode_aux_module       , only: z_vode, rho_vode, T_vode, ne_vode, &
-                                        JH_vode, JHe_vode, i_vode, j_vode, k_vode
+                                        JH_vode, JHe_vode, i_vode, j_vode, k_vode, fn_vode, NR_vode
 
       integer, intent(in)             :: num_eq, ipar
       real(rt), intent(inout) :: e_in(num_eq)
@@ -31,6 +31,7 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       real(rt) :: nh, nh0, nhp, nhe0, nhep, nhepp
       integer :: j
 
+      fn_vode=fn_vode+1;
       if (e_in(1) .lt. 0.d0) &
          e_in(1) = tiny(e_in(1))
 
@@ -46,7 +47,7 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       end if
 
       ! Get gas temperature and individual ionization species
-      call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
+      call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, NR_vode,  nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
 
       ! Convert species to CGS units: 
       ne_vode = nh * ne_vode

@@ -19,7 +19,7 @@ module meth_params_module
   ! NTHERM: number of thermodynamic variables
   integer         , save :: NTHERM, NVAR, NDIAG
   integer         , save :: URHO, UMX, UMY, UMZ, UEDEN, UEINT, UFA, UFS, UFX
-  integer         , save :: TEMP_COMP, NE_COMP, ZHI_COMP
+  integer         , save :: TEMP_COMP, NE_COMP, ZHI_COMP, TMP_COMP
 
   ! QTHERM: number of primitive variables
   integer         , save :: QTHERM, QVAR

@@ -159,7 +159,7 @@ amr.plot_nfiles     = 64
 nyx.plot_z_values   = 7.0 6.0 5.0 4.0 3.0 2.0
 particles.write_in_plotfile = 1
 
-amr.plot_vars        = density xmom ymom zmom rho_e Temp phi_grav
+amr.plot_vars        = density xmom ymom zmom rho_e Temp phi_grav Tmp
 amr.derive_plot_vars = particle_mass_density
 
 #PROBIN FILENAME

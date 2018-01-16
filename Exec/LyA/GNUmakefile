@@ -1,5 +1,5 @@
 # AMREX_HOME defines the directory in which we will find all the AMReX code
-AMREX_HOME ?= ../../../amrex
+AMREX_HOME ?= /home/jmsexton/amrex
 
 HPGMG_DIR ?= ../../Util/hpgmg/finite-volume
 CVODE_LIB_DIR ?= $(CVODE_LIB)
@@ -8,7 +8,7 @@ CVODE_LIB_DIR ?= $(CVODE_LIB)
 TOP = ../..
 
 # compilation options
-COMP    = intel  # gnu
+COMP    = gnu #intel
 USE_MPI = TRUE
 USE_OMP = TRUE
 
@@ -19,7 +19,7 @@ TINY_PROFILE  = FALSE
 
 PRECISION = DOUBLE
 USE_SINGLE_PRECISION_PARTICLES = TRUE
-DEBUG     = FALSE
+DEBUG     = TRUE
 
 GIMLET = FALSE
 REEBER = FALSE

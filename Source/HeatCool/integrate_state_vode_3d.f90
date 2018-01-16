@@ -31,7 +31,7 @@ subroutine integrate_state_vode(lo, hi, &
 !
     use amrex_fort_module, only : rt => amrex_real
     use meth_params_module, only : NVAR, URHO, UEDEN, UEINT, &
-                                   NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, gamma_minus_1
+                                   NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, TMP_COMP, gamma_minus_1
     use bl_constants_module, only: M_PI
     use eos_params_module
     use network
@@ -58,6 +58,7 @@ subroutine integrate_state_vode(lo, hi, &
     real(rt) :: z, z_end, a_end, rho, H_reion_z, He_reion_z
     real(rt) :: T_orig, ne_orig, e_orig
     real(rt) :: T_out , ne_out , e_out, mu, mean_rhob, T_H, T_He
+    integer :: fn_out
     real(rt) :: species(5)
 
     z = 1.d0/a - 1.d0
@@ -116,7 +117,7 @@ subroutine integrate_state_vode(lo, hi, &
                 k_vode = k
 
                 call vode_wrapper(half_dt,rho,T_orig,ne_orig,e_orig, &
-                                              T_out ,ne_out ,e_out)
+                                              T_out ,ne_out ,e_out, fn_out)
 
                 if (e_out .lt. 0.d0) then
                     !$OMP CRITICAL
@@ -160,6 +161,8 @@ subroutine integrate_state_vode(lo, hi, &
                 ! Update T and ne
                 diag_eos(i,j,k,TEMP_COMP) = T_out
                 diag_eos(i,j,k,  NE_COMP) = ne_out
+!                diag_eos(i,j,k, TMP_COMP) = i*10000+j*100+k
+                diag_eos(i,j,k, TMP_COMP) = fn_out
 
             end do ! i
         end do ! j
@@ -168,17 +171,18 @@ subroutine integrate_state_vode(lo, hi, &
 end subroutine integrate_state_vode
 
 
-subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out)
+subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_out)
 
     use amrex_fort_module, only : rt => amrex_real
     use vode_aux_module, only: rho_vode, T_vode, ne_vode, &
-                               i_vode, j_vode, k_vode
+                               i_vode, j_vode, k_vode, fn_vode, NR_vode
 
     implicit none
 
     real(rt), intent(in   ) :: dt
     real(rt), intent(in   ) :: rho_in, T_in, ne_in, e_in
     real(rt), intent(  out) ::         T_out,ne_out,e_out
+    integer,  intent(  out) ::         fn_out
 
     ! Set the number of independent variables -- this should be just "e"
     integer, parameter :: NEQ = 1
@@ -242,6 +246,8 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out)
     T_vode   = T_in
     ne_vode  = ne_in
     rho_vode = rho_in
+    fn_vode  = 0
+    NR_vode  = 0
 
     ! We want VODE to re-initialize each time we call it
     istate = 1
@@ -270,6 +276,17 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out)
     e_out  = y(1)
     T_out  = T_vode
     ne_out = ne_vode
+!    fn_out = iwork(12)
+
+!    if ( fn_out .ne. 7) then
+!       print *, 'function_evaluations=', fn_out
+!    endif
+
+    fn_out = NR_vode
+
+    if ( fn_out .ge. 100) then
+       print *, 'function_evaluations = ', fn_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+    endif
 
     if (istate < 0) then
        print *, 'istate = ', istate, 'at (i,j,k) ',i_vode,j_vode,k_vode

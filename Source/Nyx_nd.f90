@@ -254,6 +254,7 @@
            TEMP_COMP = -1
              NE_COMP = -1
             ZHI_COMP = -1
+            TMP_COMP = -1
 
         else
 
@@ -261,8 +262,10 @@
              NE_COMP = 2
             if (inhomo_reion_in .gt. 0) then
                ZHI_COMP = 3
+               TMP_COMP = 4
             else
                ZHI_COMP = -1
+               TMP_COMP = 3
             endif
 
            !---------------------------------------------------------------------
