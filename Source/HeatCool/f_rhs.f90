@@ -30,8 +30,9 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       real(rt) :: rho, U, a, rho_heat
       real(rt) :: nh, nh0, nhp, nhe0, nhep, nhepp
       integer :: j
+      integer :: placeholder
 
-      fn_vode=fn_vode+1;
+      fn_vode=fn_vode+1; !Changed f_vode to track placeholder
       if (e_in(1) .lt. 0.d0) &
          e_in(1) = tiny(e_in(1))
 
@@ -47,7 +48,16 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       end if
 
       ! Get gas temperature and individual ionization species
-      call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, NR_vode,  nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
+      placeholder=0
+      ! testing different memory structures
+!      NR_vode=0
+      call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, placeholder,  nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
+!      fn_vode=fn_vode+placeholder
+      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
+         print *, 'NR_vode=', NR_vode
+         print *, 'placeholder=', placeholder
+!         print *, 'fn_vode=',fn_vode
+      end if
 
       ! Convert species to CGS units: 
       ne_vode = nh * ne_vode

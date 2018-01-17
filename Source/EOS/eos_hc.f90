@@ -516,11 +516,12 @@ module eos_module
 
       use amrex_error_module, only: amrex_abort
       use atomic_rates_module, only: this_z, YHELIUM
+      use vode_aux_module, only: NR_vode
 
       integer :: i
 
       integer, intent(in) :: JH, JHe
-      integer, intent(out) :: NR
+      integer, intent(inout) :: NR
       real(rt), intent (in   ) :: z, U, nh
       real(rt), intent (inout) :: ne
       real(rt), intent (  out) :: t, nh0, nhp, nhe0, nhep, nhepp
@@ -537,7 +538,6 @@ module eos_module
       end if
 
       i = 0
-      NR = 0
       ne = 1.0d0 ! 0 is a bad guess
       do  ! Newton-Raphson solver
          i = i + 1
@@ -553,7 +553,8 @@ module eos_module
          endif
          call ion_n(JH, JHe, U, nh, (ne+eps), nhp_plus, nhep_plus, nhepp_plus, t)
 
-         NR  = NR + 2
+         NR = NR + 2
+         NR_vode  = NR_vode + 2
 
          dnhp_dne   = (nhp_plus   - nhp)   / eps
          dnhep_dne  = (nhep_plus  - nhep)  / eps
@@ -579,7 +580,12 @@ module eos_module
 
       ! Get rates for the final ne
       call ion_n(JH, JHe, U, nh, ne, nhp, nhep, nhepp, t)
-      NR  = NR + 1
+      NR = NR + 1
+      NR_vode  = NR_vode + 1
+
+      if(i.gt.2) then
+         print *, 'Reached third iteration'
+      end if
 
       ! Neutral fractions:
       nh0   = 1.0d0 - nhp

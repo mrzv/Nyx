@@ -268,6 +268,11 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     atol(1) = 1.d-4 * e_in
     rtol(1) = 1.d-4
 
+      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
+         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
+         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
+      end if
+
     ! call the integration routine
     call dvode(f_rhs, NEQ, y, time, dt, ITOL, rtol, atol, ITASK, &
                istate, IOPT, rwork, LRW, iwork, LIW, jac, MF_NUMERICAL_JAC, &
@@ -281,10 +286,14 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !    if ( fn_out .ne. 7) then
 !       print *, 'function_evaluations=', fn_out
 !    endif
-
     fn_out = NR_vode
+      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
+         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
+         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
+      end if
 
-    if ( fn_out .ge. 100) then
+
+    if ( fn_out .ge. 500) then
        print *, 'function_evaluations = ', fn_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
     endif
 
