@@ -103,7 +103,8 @@ int Nyx::Zmom = -1;
 int Nyx::Temp_comp = -1;
 int Nyx::  Ne_comp = -1;
 int Nyx:: Zhi_comp = -1;
-int Nyx:: tmp_comp = -1;
+int Nyx:: Sfnr_comp = -1;
+int Nyx:: Ssnr_comp = -1;
 
 int Nyx::NumSpec  = 0;
 int Nyx::NumAux   = 0;
@@ -2464,7 +2465,8 @@ Nyx::AddProcsToComp(Amr *aptr, int nSidecarProcs, int prevSidecarProcs,
         allInts.push_back(Temp_comp);
         allInts.push_back(Ne_comp);
         allInts.push_back(Zhi_comp);
-        allInts.push_back(tmp_comp);
+        allInts.push_back(Sfnr_comp);
+	allInts.push_back(Ssnr_comp);
         allInts.push_back(FirstSpec);
         allInts.push_back(FirstAux);
         allInts.push_back(FirstAdv);
@@ -2522,7 +2524,8 @@ Nyx::AddProcsToComp(Amr *aptr, int nSidecarProcs, int prevSidecarProcs,
         Temp_comp = allInts[count++];
         Ne_comp = allInts[count++];
         Zhi_comp = allInts[count++];
-        tmp_comp = allInts[count++];
+        Sfnr_comp = allInts[count++];
+        Ssnr_comp = allInts[count++];
         FirstSpec = allInts[count++];
         FirstAux = allInts[count++];
         FirstAdv = allInts[count++];

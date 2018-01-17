@@ -46,3 +46,4 @@ AMReX_buildInfo.cpp
 *.bak
 
 Backtrace.*
+bl_prof*

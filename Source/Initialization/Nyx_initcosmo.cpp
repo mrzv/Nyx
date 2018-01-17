@@ -419,7 +419,8 @@ void Nyx::initcosmo()
         D_new.setVal(0.0, Ne_comp);
         if (inhomo_reion > 0)
             D_new.setVal(0.0, Zhi_comp);
-        D_new.setVal(0.0, tmp_comp);
+        D_new.setVal(0.0, Sfnr_comp);
+        D_new.setVal(0.0, Ssnr_comp);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -453,7 +454,8 @@ void Nyx::initcosmo()
        S_new.setVal(0.0, Density);
        D_new.setVal(-23, Temp_comp);
        D_new.setVal(-42, Ne_comp);
-       D_new.setVal(-42, tmp_comp);
+       D_new.setVal(-42, Sfnr_comp);
+       D_new.setVal(-42, Ssnr_comp);
     }
        
     mf.clear();

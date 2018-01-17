@@ -31,7 +31,8 @@ subroutine integrate_state_vode(lo, hi, &
 !
     use amrex_fort_module, only : rt => amrex_real
     use meth_params_module, only : NVAR, URHO, UEDEN, UEINT, &
-                                   NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, TMP_COMP, gamma_minus_1
+                                   NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, &
+                                   SFNR_COMP,  SSNR_COMP, STRANG_COMP, gamma_minus_1
     use bl_constants_module, only: M_PI
     use eos_params_module
     use network
@@ -61,6 +62,7 @@ subroutine integrate_state_vode(lo, hi, &
     integer :: fn_out
     real(rt) :: species(5)
 
+    STRANG_COMP=SFNR_COMP
     z = 1.d0/a - 1.d0
     call fort_integrate_comoving_a(a, a_end, half_dt)
     z_end = 1.0d0/a_end - 1.0d0
@@ -162,7 +164,7 @@ subroutine integrate_state_vode(lo, hi, &
                 diag_eos(i,j,k,TEMP_COMP) = T_out
                 diag_eos(i,j,k,  NE_COMP) = ne_out
 !                diag_eos(i,j,k, TMP_COMP) = i*10000+j*100+k
-                diag_eos(i,j,k, TMP_COMP) = fn_out
+                diag_eos(i,j,k, STRANG_COMP) = fn_out
 
             end do ! i
         end do ! j

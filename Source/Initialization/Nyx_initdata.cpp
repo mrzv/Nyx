@@ -211,7 +211,8 @@ Nyx::initData ()
             int         nd       = D_new.nComp();
             D_new.setVal(0., Temp_comp);
             D_new.setVal(0.,   Ne_comp);
-            D_new.setVal(0.,  tmp_comp);
+            D_new.setVal(0., Sfnr_comp);
+            D_new.setVal(0., Ssnr_comp);
 
             for (MFIter mfi(S_new,true); mfi.isValid(); ++mfi)
             {
