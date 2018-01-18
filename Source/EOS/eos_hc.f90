@@ -578,10 +578,6 @@ module eos_module
       call ion_n(JH, JHe, U, nh, ne, nhp, nhep, nhepp, t)
       NR_vode  = NR_vode + 1
 
-      if(i.gt.2) then
-         print *, 'Reached third iteration'
-      end if
-
       ! Neutral fractions:
       nh0   = 1.0d0 - nhp
       nhe0  = YHELIUM - (nhep + nhepp)
