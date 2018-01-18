@@ -1,7 +1,7 @@
 subroutine integrate_state_vode(lo, hi, &
                                 state   , s_l1, s_l2, s_l3, s_h1, s_h2, s_h3, &
                                 diag_eos, d_l1, d_l2, d_l3, d_h1, d_h2, d_h3, &
-                                a, half_dt, min_iter, max_iter)
+                                a, half_dt, min_iter, max_iter, s_comp)
 !
 !   Calculates the sources to be added later on.
 !
@@ -54,6 +54,7 @@ subroutine integrate_state_vode(lo, hi, &
     real(rt), intent(inout) :: diag_eos(d_l1:d_h1, d_l2:d_h2,d_l3:d_h3, NDIAG)
     real(rt), intent(in)    :: a, half_dt
     integer         , intent(inout) :: max_iter, min_iter
+    integer         , intent(in   ) :: s_comp
 
     integer :: i, j, k
     real(rt) :: z, z_end, a_end, rho, H_reion_z, He_reion_z
@@ -62,7 +63,18 @@ subroutine integrate_state_vode(lo, hi, &
     integer :: fn_out
     real(rt) :: species(5)
 
-    STRANG_COMP=SFNR_COMP
+!    STRANG_COMP=SFNR_COMP
+    STRANG_COMP=SFNR_COMP+s_comp
+
+    ! more robustly as an if statement:
+!    if (s_comp.eq.0) then
+!       STRANG_COMP=SFNR_COMP
+!       print *, 'write to first'
+!    else
+!       STRANG_COMP=SSNR_COMP
+!       print *, 'write to second'
+!    end if
+
     z = 1.d0/a - 1.d0
     call fort_integrate_comoving_a(a, a_end, half_dt)
     z_end = 1.0d0/a_end - 1.0d0
@@ -270,10 +282,10 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     atol(1) = 1.d-4 * e_in
     rtol(1) = 1.d-4
 
-      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
-         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
-         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
-      end if
+!      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
+!         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
+!         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
+!      end if
 
     ! call the integration routine
     call dvode(f_rhs, NEQ, y, time, dt, ITOL, rtol, atol, ITASK, &
@@ -289,15 +301,15 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !       print *, 'function_evaluations=', fn_out
 !    endif
     fn_out = NR_vode
-      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
-         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
-         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
-      end if
+!      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
+!         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
+!         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
+!      end if
 
 
-    if ( fn_out .ge. 500) then
-       print *, 'function_evaluations = ', fn_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
-    endif
+!    if ( fn_out .ge. 500) then
+!       print *, 'function_evaluations = ', fn_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!    endif
 
     if (istate < 0) then
        print *, 'istate = ', istate, 'at (i,j,k) ',i_vode,j_vode,k_vode

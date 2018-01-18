@@ -189,7 +189,9 @@ Nyx::just_the_hydro (Real time,
 
        // We copy old Temp and Ne to new Temp and Ne so that they can be used
        //    as guesses when we next need them.
-       MultiFab::Copy(D_new,D_old,0,0,D_old.nComp(),0);
+       MultiFab::Copy(D_new,D_old,0,0,D_old.nComp()-2,0);
+       // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
+       MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,2,0);
 
        if (do_reflux) {
          if (current) {

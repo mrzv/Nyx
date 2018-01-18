@@ -165,7 +165,6 @@ module eos_module
 
       double precision :: nh, nh0, nhep, nhp, nhe0, nhepp
       double precision :: z, rho, U
-      integer          :: NR
 
       ! This converts from code units to CGS
       rho = R_in * density_to_cgs / a**3
@@ -174,7 +173,7 @@ module eos_module
 
       z   = 1.d0/a - 1.d0
 
-      call iterate_ne(JH, Jhe, z, U, T, NR, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
+      call iterate_ne(JH, Jhe, z, U, T, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
 
       if (present(species)) then
          species(1) = nh0
@@ -227,12 +226,11 @@ module eos_module
       real(rt),           intent(  out) :: nh0, nhep
 
       real(rt) :: nh, nhp, nhe0, nhepp, T, ne
-      integer  :: NR
 
       nh  = rho*XHYDROGEN/MPROTON
       ne  = 1.0d0 ! Guess
 
-      call iterate_ne(JH, JHe, z, e, T, NR, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
+      call iterate_ne(JH, JHe, z, e, T, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
 
       nh0  = nh*nh0
       nhep = nh*nhep
@@ -512,7 +510,7 @@ module eos_module
 
      ! ****************************************************************************
 
-      subroutine iterate_ne(JH, JHe, z, U, t, NR, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
+      subroutine iterate_ne(JH, JHe, z, U, t, nh, ne, nh0, nhp, nhe0, nhep, nhepp)
 
       use amrex_error_module, only: amrex_abort
       use atomic_rates_module, only: this_z, YHELIUM
@@ -521,7 +519,6 @@ module eos_module
       integer :: i
 
       integer, intent(in) :: JH, JHe
-      integer, intent(inout) :: NR
       real(rt), intent (in   ) :: z, U, nh
       real(rt), intent (inout) :: ne
       real(rt), intent (  out) :: t, nh0, nhp, nhe0, nhep, nhepp
@@ -553,7 +550,6 @@ module eos_module
          endif
          call ion_n(JH, JHe, U, nh, (ne+eps), nhp_plus, nhep_plus, nhepp_plus, t)
 
-         NR = NR + 2
          NR_vode  = NR_vode + 2
 
          dnhp_dne   = (nhp_plus   - nhp)   / eps
@@ -580,7 +576,6 @@ module eos_module
 
       ! Get rates for the final ne
       call ion_n(JH, JHe, U, nh, ne, nhp, nhep, nhepp, t)
-      NR = NR + 1
       NR_vode  = NR_vode + 1
 
       if(i.gt.2) then

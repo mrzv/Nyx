@@ -254,7 +254,7 @@ extern "C"
      BL_FORT_FAB_ARG(diag_eos),
      const amrex::Real* dx, const amrex::Real* time, 
      const amrex::Real* z, const amrex::Real* dt,
-     const int* min_iter, const int* max_iter);
+     const int* min_iter, const int* max_iter, const int* strang_comp);
 
   void fort_compute_temp
     (const int lo[], const int hi[],

@@ -403,16 +403,16 @@ Nyx::hydro_setup()
     if (inhomo_reion > 0) {
        desc_lst.setComponent(DiagEOS_Type, 2, "Z_HI", bc,
                              BndryFunc(generic_fill));
-       desc_lst.setComponent(DiagEOS_Type, 3, "Strang1_NewtonRhaphson", bc,
+       desc_lst.setComponent(DiagEOS_Type, 3, "SFNR", bc,
                           BndryFunc(generic_fill));
-       desc_lst.setComponent(DiagEOS_Type, 4, "Strang2_NewtonRhaphson", bc,
+       desc_lst.setComponent(DiagEOS_Type, 4, "SSNR", bc,
                           BndryFunc(generic_fill));
     }
     else
       {
-    desc_lst.setComponent(DiagEOS_Type, 2, "Strang1_NewtonRhaphson", bc,
+    desc_lst.setComponent(DiagEOS_Type, 2, "SFNR", bc,
                           BndryFunc(generic_fill));
-    desc_lst.setComponent(DiagEOS_Type, 3, "Strang2_NewtonRhaphson", bc,
+    desc_lst.setComponent(DiagEOS_Type, 3, "SSNR", bc,
                           BndryFunc(generic_fill));
       }
 

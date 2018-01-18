@@ -13,7 +13,7 @@ Nyx::strang_first_step (Real time, Real dt, MultiFab& S_old, MultiFab& D_old)
 
     const Real a = get_comoving_a(time);
     const Real* dx = geom.CellSize();
-
+    int strang_comp  =   0;
 #ifndef FORCING
     {
       const Real z = 1.0/a - 1.0;
@@ -24,6 +24,8 @@ Nyx::strang_first_step (Real time, Real dt, MultiFab& S_old, MultiFab& D_old)
 #ifdef _OPENMP
 #pragma omp parallel
 #endif
+    //    D_old.setVal(0,Sfnr_comp);
+    //    D_old.setVal(-2,Ssnr_comp);
     for (MFIter mfi(S_old,true); mfi.isValid(); ++mfi)
     {
         // Note that this "bx" includes the grow cells 
@@ -31,12 +33,13 @@ Nyx::strang_first_step (Real time, Real dt, MultiFab& S_old, MultiFab& D_old)
 
         int  min_iter = 100000;
         int  max_iter =      0;
+	strang_comp  =   0;
 
         integrate_state
                 (bx.loVect(), bx.hiVect(), 
                  BL_TO_FORTRAN(S_old[mfi]),
                  BL_TO_FORTRAN(D_old[mfi]),
-                 dx, &time, &a, &half_dt, &min_iter, &max_iter);
+                 dx, &time, &a, &half_dt, &min_iter, &max_iter, &strang_comp);
 
 #ifndef NDEBUG
         if (S_old[mfi].contains_nan())
@@ -60,6 +63,7 @@ Nyx::strang_second_step (Real time, Real dt, MultiFab& S_new, MultiFab& D_new)
 
     int min_iter_grid;
     int max_iter_grid;
+    int strang_comp;
 
     // Set a at the half of the time step in the second strang
     const Real a = get_comoving_a(time-half_dt);
@@ -73,7 +77,8 @@ Nyx::strang_second_step (Real time, Real dt, MultiFab& S_new, MultiFab& D_new)
       fort_interp_to_this_z(&z);
     }
 #endif
-
+    //    D_new.setVal(-1,Sfnr_comp);
+    //    D_new.setVal(0,Ssnr_comp);
 #ifdef _OPENMP
 #pragma omp parallel private(min_iter_grid,max_iter_grid) reduction(min:min_iter) reduction(max:max_iter)
 #endif
@@ -84,12 +89,13 @@ Nyx::strang_second_step (Real time, Real dt, MultiFab& S_new, MultiFab& D_new)
 
         min_iter_grid = 100000;
         max_iter_grid =      0;
+	strang_comp   =      1;
 
         integrate_state
             (bx.loVect(), bx.hiVect(), 
              BL_TO_FORTRAN(S_new[mfi]),
              BL_TO_FORTRAN(D_new[mfi]),
-             dx, &time, &a, &half_dt, &min_iter_grid, &max_iter_grid);
+             dx, &time, &a, &half_dt, &min_iter_grid, &max_iter_grid,&strang_comp);
 
         if (S_new[mfi].contains_nan(bx,0,S_new.nComp()))
         {
