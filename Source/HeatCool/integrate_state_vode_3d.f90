@@ -252,6 +252,7 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     
     real(rt) :: rpar
     integer          :: ipar
+    integer          :: print_radius
 
     EXTERNAL jac, f_rhs
     
@@ -301,6 +302,18 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !       print *, 'function_evaluations=', fn_out
 !    endif
     fn_out = NR_vode
+          print_radius = 2
+      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
+           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+           ((ABS(i_vode-94) .lt. print_radius  .and. &
+           ABS(j_vode-112).lt.print_radius .and. ABS(k_vode-40).lt.print_radius )) )then
+!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
+!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+       print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
+      end if
+
 !      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
 !         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
 !         print *, 'Newton-Rhaphson iterations per vode call=', fn_out

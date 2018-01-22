@@ -30,7 +30,7 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       real(rt) :: rho, U, a, rho_heat
       real(rt) :: nh, nh0, nhp, nhe0, nhep, nhepp
       integer :: j
-      integer :: placeholder
+      integer :: print_radius
 
       fn_vode=fn_vode+1;
       if (e_in(1) .lt. 0.d0) &
@@ -51,10 +51,18 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       ! testing different memory structures
 !      NR_vode=0
       call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
-!      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
-!         print *, 'NR_vode=', NR_vode
-!         print *, 'fn_vode=',fn_vode
-!      end if
+      print_radius = 2
+      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
+           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+           ((ABS(i_vode-94) .lt. print_radius  .and. &
+           ABS(j_vode-112).lt.print_radius .and. ABS(k_vode-40).lt.print_radius )) )then
+!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
+!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+       print *, 'fn_vode = ', fn_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'NR_vode = ', NR_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+      end if
 
       ! Convert species to CGS units: 
       ne_vode = nh * ne_vode
