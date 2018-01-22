@@ -272,6 +272,9 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     
     ! Set the maximum number of steps allowed (the VODE default is 500)
     iwork(6) = 2000
+
+    ! Set the minimum hvalue allowed (the VODE default is 0.d0)
+!    rwork(7) = 1.d-5
     
     ! Initialize the integration time
     time = 0.d0
