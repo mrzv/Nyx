@@ -562,19 +562,13 @@ module eos_module
          dne = f/df
 
          ne = max((ne-dne), 0.0d0)
-      print_radius = 2
-      if ( ((ABS(i_vode-33) .le. print_radius  .and. &
-           ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) .or. &
-!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-           ((ABS(i_vode-94) .le. print_radius  .and. &
-           ABS(j_vode-112).le.print_radius .and. ABS(k_vode-40).le.print_radius )) )then
-!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
-!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
-       print *, 'ne = ', ne, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'dne = ', dne, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'xacc = ', xacc, 'at (i,j,k) ',i_vode,j_vode,k_vode
-      end if
+!      print_radius = 2
+!      if ( ((ABS(i_vode-33) .le. print_radius  .and. &
+!           ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
+!       print *, 'ne = ', ne, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'dne = ', dne, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'xacc = ', xacc, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!      end if
          if (abs(dne) < xacc) exit
 
          if (i .gt. 10) then

@@ -310,11 +310,15 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
            ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-           ((ABS(i_vode-94) .lt. print_radius  .and. &
-           ABS(j_vode-112).lt.print_radius .and. ABS(k_vode-40).lt.print_radius )) )then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
        print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'e_in = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'T_in = ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'T_out = ', T_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'atol = ', atol(1), 'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
 
 !      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
