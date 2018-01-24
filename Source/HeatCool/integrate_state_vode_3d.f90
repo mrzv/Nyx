@@ -64,7 +64,13 @@ subroutine integrate_state_vode(lo, hi, &
     real(rt) :: species(5)
 
 !    STRANG_COMP=SFNR_COMP
-    STRANG_COMP=SFNR_COMP+s_comp
+
+
+!    STRANG_COMP=SFNR_COMP+s_comp
+
+!!!!! Writing to first componenet spot first automatically, to keep o
+! only the second strang info
+    STRANG_COMP=SFNR_COMP
 
     ! more robustly as an if statement:
 !    if (s_comp.eq.0) then
@@ -176,7 +182,8 @@ subroutine integrate_state_vode(lo, hi, &
                 diag_eos(i,j,k,TEMP_COMP) = T_out
                 diag_eos(i,j,k,  NE_COMP) = ne_out
 !                diag_eos(i,j,k, TMP_COMP) = i*10000+j*100+k
-                diag_eos(i,j,k, STRANG_COMP) = fn_out
+!                diag_eos(i,j,k, STRANG_COMP) = fn_out
+                diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
 
             end do ! i
         end do ! j
@@ -305,19 +312,21 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !       print *, 'function_evaluations=', fn_out
 !    endif
     fn_out = NR_vode
-          print_radius = 2
+          print_radius = 1
       if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-           ((ABS(i_vode-29) .lt. print_radius  .and. &
-           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
+!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
        print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'rho_in = ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'e_in = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'e_ot = ', e_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'T_in = ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'T_out = ', T_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'T_ot = ', T_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'atol = ', atol(1), 'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
 

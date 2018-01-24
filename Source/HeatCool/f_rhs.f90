@@ -51,13 +51,13 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       ! testing different memory structures
 !      NR_vode=0
       call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
-      print_radius = 2
+      print_radius = 1
       if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-           ((ABS(i_vode-29) .lt. print_radius  .and. &
-           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
+!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
        print *, 'fn_vode = ', fn_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
@@ -84,17 +84,17 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
          energy  = energy / rho_vode * (1.0d0+z_vode)
          ne_vode = ne_vode / nh
       if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-           ((ABS(i_vode-29) .lt. print_radius  .and. &
-           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
+!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
-       print *, 'TMAX', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'energy = ', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'TMAX', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'enr = ', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
 !       print *, 'rho_heat = ', rho_heat, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'rho_vd = ', rho_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'rho = ', rho_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
          return
       end if

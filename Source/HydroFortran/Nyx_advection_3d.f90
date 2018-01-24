@@ -1315,6 +1315,12 @@
 
                      uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
 
+                     ! *********************************************************************************
+                     ! Adding a hacky output for ratio of output - input uout(UEINT)/uout(rho)-uin(UEINT)/(uin(rho))
+                     !  src(i,j,k,n)= 
+                     ! *********************************************************************************
+                     src(i,j,k,1)= uout(i,j,k,UEINT)/uout(i,j,k,URHO)-uin(i,j,k,UEINT)/uin(i,j,k,URHO);
+
                   ! (rho X_i) and (rho adv_i) and (rho aux_i)
                   else
                      uout(i,j,k,n) = uin(i,j,k,n) + &
