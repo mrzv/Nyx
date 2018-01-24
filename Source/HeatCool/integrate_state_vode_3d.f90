@@ -70,7 +70,12 @@ subroutine integrate_state_vode(lo, hi, &
 
 !!!!! Writing to first componenet spot first automatically, to keep o
 ! only the second strang info
-    STRANG_COMP=SFNR_COMP
+    integer track_diag_energy=0;
+    if(track_diag_energy) then
+       STRANG_COMP=SFNR_COMP
+    else
+       STRANG_COMP=SFNR_COMP+s_comp
+    end if
 
     ! more robustly as an if statement:
 !    if (s_comp.eq.0) then
@@ -182,8 +187,14 @@ subroutine integrate_state_vode(lo, hi, &
                 diag_eos(i,j,k,TEMP_COMP) = T_out
                 diag_eos(i,j,k,  NE_COMP) = ne_out
 !                diag_eos(i,j,k, TMP_COMP) = i*10000+j*100+k
+
 !                diag_eos(i,j,k, STRANG_COMP) = fn_out
-                diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
+                if(track_diag_energy) then
+                   diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
+                else
+                   diag_eos(i,j,k, STRANG_COMP) = fn_out
+                endif
+
 
             end do ! i
         end do ! j
