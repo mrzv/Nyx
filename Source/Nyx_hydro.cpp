@@ -191,17 +191,20 @@ Nyx::just_the_hydro (Real time,
        //    as guesses when we next need them.
        MultiFab::Copy(D_new,D_old,0,0,D_old.nComp()-2,0);
 
-       bool track_diag_energy=false;
+       /*       bool track_diag_energy=false;
        if(track_diag_energy) {
 	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
 	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,1,0);
 	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
 	 MultiFab::Copy(D_new,ext_src_old,0,Ssnr_comp,1,0);
-       } else {
+	 } else */{
 	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
-	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,2,0);
+	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,3,0);
+	 MultiFab::Copy(D_new,ext_src_old,0,Diag2_comp,1,0);
 	 }
+       /*
 	 ext_src_old.setVal(0);
+       */
 
        if (do_reflux) {
          if (current) {

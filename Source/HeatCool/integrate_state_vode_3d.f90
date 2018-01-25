@@ -32,7 +32,7 @@ subroutine integrate_state_vode(lo, hi, &
     use amrex_fort_module, only : rt => amrex_real
     use meth_params_module, only : NVAR, URHO, UEDEN, UEINT, &
                                    NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, &
-                                   SFNR_COMP,  SSNR_COMP, STRANG_COMP, gamma_minus_1
+                                   SFNR_COMP,  SSNR_COMP, DIAG1_COMP, STRANG_COMP, gamma_minus_1
     use bl_constants_module, only: M_PI
     use eos_params_module
     use network
@@ -70,12 +70,13 @@ subroutine integrate_state_vode(lo, hi, &
 
 !!!!! Writing to first componenet spot first automatically, to keep o
 ! only the second strang info
-    integer track_diag_energy=0;
-    if(track_diag_energy) then
-       STRANG_COMP=SFNR_COMP
-    else
+!    integer :: track_diag_energy;
+!    track_diag_energy=0;
+!    if(track_diag_energy) then
+!       STRANG_COMP=SFNR_COMP
+!    else
        STRANG_COMP=SFNR_COMP+s_comp
-    end if
+!    end if
 
     ! more robustly as an if statement:
 !    if (s_comp.eq.0) then
@@ -189,11 +190,12 @@ subroutine integrate_state_vode(lo, hi, &
 !                diag_eos(i,j,k, TMP_COMP) = i*10000+j*100+k
 
 !                diag_eos(i,j,k, STRANG_COMP) = fn_out
-                if(track_diag_energy) then
-                   diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
-                else
+!                if(track_diag_energy) then
+!                   diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
+!               else
                    diag_eos(i,j,k, STRANG_COMP) = fn_out
-                endif
+                   diag_eos(i,j,k, DIAG1_COMP) = e_out-e_orig
+!                endif
 
 
             end do ! i

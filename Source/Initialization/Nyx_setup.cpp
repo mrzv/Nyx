@@ -202,14 +202,18 @@ Nyx::hydro_setup()
       Ne_comp = 1;
     if (inhomo_reion > 0)
     {
-        NDIAG_C  = 5;
+        NDIAG_C  = 7;
         Zhi_comp = 2;
 	Sfnr_comp = 3;
 	Ssnr_comp = 4;
+	Diag1_comp = 5;
+	Diag2_comp = 6;
     } else {
-        NDIAG_C  = 4;
+        NDIAG_C  = 6;
 	Sfnr_comp = 2;
 	Ssnr_comp = 3;
+	Diag1_comp = 4;
+	Diag2_comp = 5;
     }
 
     // Add extra diag variable
@@ -407,12 +411,20 @@ Nyx::hydro_setup()
                           BndryFunc(generic_fill));
        desc_lst.setComponent(DiagEOS_Type, 4, "SSNR", bc,
                           BndryFunc(generic_fill));
+       desc_lst.setComponent(DiagEOS_Type, 5, "DIAG1", bc,
+                          BndryFunc(generic_fill));
+       desc_lst.setComponent(DiagEOS_Type, 6, "DIAG2", bc,
+                          BndryFunc(generic_fill));
     }
     else
       {
     desc_lst.setComponent(DiagEOS_Type, 2, "SFNR", bc,
                           BndryFunc(generic_fill));
     desc_lst.setComponent(DiagEOS_Type, 3, "SSNR", bc,
+                          BndryFunc(generic_fill));
+       desc_lst.setComponent(DiagEOS_Type, 4, "DIAG1", bc,
+                          BndryFunc(generic_fill));
+       desc_lst.setComponent(DiagEOS_Type, 5, "DIAG2", bc,
                           BndryFunc(generic_fill));
       }
 

@@ -421,6 +421,8 @@ void Nyx::initcosmo()
             D_new.setVal(0.0, Zhi_comp);
         D_new.setVal(0.0, Sfnr_comp);
         D_new.setVal(0.0, Ssnr_comp);
+        D_new.setVal(0.0, Diag1_comp);
+        D_new.setVal(0.0, Diag2_comp);
 
 #ifdef _OPENMP
 #pragma omp parallel
@@ -456,6 +458,8 @@ void Nyx::initcosmo()
        D_new.setVal(-42, Ne_comp);
        D_new.setVal(-42, Sfnr_comp);
        D_new.setVal(-42, Ssnr_comp);
+       D_new.setVal(-42, Diag1_comp);
+       D_new.setVal(-42, Diag2_comp);
     }
        
     mf.clear();

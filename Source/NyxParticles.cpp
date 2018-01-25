@@ -703,6 +703,8 @@ Nyx::init_santa_barbara (int init_sb_vels)
             D_new[mfi].setVal(0,   Ne_comp);
             D_new[mfi].setVal(0, Sfnr_comp);
             D_new[mfi].setVal(0, Ssnr_comp);
+            D_new[mfi].setVal(0, Diag1_comp);
+            D_new[mfi].setVal(0, Diag2_comp);
 
             fort_initdata
                 (level, cur_time, lo, hi, 

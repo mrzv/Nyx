@@ -534,7 +534,7 @@ public:
     static int NUM_STATE;
     static int Density, Xmom, Ymom, Zmom, Eden, Eint;
 
-  static int Temp_comp, Ne_comp, Zhi_comp, Sfnr_comp, Ssnr_comp;
+  static int Temp_comp, Ne_comp, Zhi_comp, Sfnr_comp, Ssnr_comp, Diag1_comp, Diag2_comp;
 
     static int FirstSpec, FirstAux, FirstAdv;
     static int NumSpec, NumAux, NumAdv;
