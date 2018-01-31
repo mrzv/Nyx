@@ -210,8 +210,9 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     use amrex_fort_module, only : rt => amrex_real
     use vode_aux_module, only: rho_vode, T_vode, ne_vode, &
                                i_vode, j_vode, k_vode, fn_vode, NR_vode
-
     implicit none
+
+    include "g_debug.h"
 
     real(rt), intent(in   ) :: dt
     real(rt), intent(in   ) :: rho_in, T_in, ne_in, e_in
@@ -310,7 +311,23 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !         print *, 'Newton-Rhaphson iterations per vode call=', NR_vode
 !         print *, 'Newton-Rhaphson iterations per vode call=', fn_out
 !      end if
-
+          print_radius = 1
+      if ( &!!((ABS(i_vode-33) .lt. print_radius  .and. &
+           !!ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
+!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+           print *, 'Entering dvode'
+           print *, 'rho_in1= ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+           print *, 'e_in1= ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+           print *, 'T_in1= ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+ end if
+    
+    !calling dvode
+    g_debug = 0
     ! call the integration routine
     call dvode(f_rhs, NEQ, y, time, dt, ITOL, rtol, atol, ITASK, &
                istate, IOPT, rwork, LRW, iwork, LIW, jac, MF_NUMERICAL_JAC, &
@@ -325,15 +342,16 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !       print *, 'function_evaluations=', fn_out
 !    endif
     fn_out = NR_vode
-          print_radius = 1
-      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
+!          print_radius = 1
+      if ( &!!((ABS(i_vode-33) .lt. print_radius  .and. &
+           !!ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
-!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+       print *, 'Exited dvode'
        print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'rho_in = ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'e_in = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode

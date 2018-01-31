@@ -15,6 +15,8 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       use vode_aux_module       , only: z_vode, rho_vode, T_vode, ne_vode, &
                                         JH_vode, JHe_vode, i_vode, j_vode, k_vode, fn_vode, NR_vode
 
+      include "g_debug.h"
+
       integer, intent(in)             :: num_eq, ipar
       real(rt), intent(inout) :: e_in(num_eq)
       real(rt), intent(in   ) :: time
@@ -32,7 +34,29 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       integer :: j
       integer :: print_radius
 
+
       fn_vode=fn_vode+1;
+      print_radius = 1
+      if ( &!((ABS(i_vode-33) .lt. print_radius  .and. &
+           !ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
+!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+      if(g_debug.eq.0) then
+         print*, 'No Jac f_rhs'
+      else
+         print*, 'Yes Jac f_rhs'
+      end if
+       print *, 'time = ', time, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'e_in f_rhs = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'rho_vode f_rhs = ', rho_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'fn_vode = ', fn_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'NR_vode = ', NR_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+      end if
+
       if (e_in(1) .lt. 0.d0) &
          e_in(1) = tiny(e_in(1))
 
@@ -51,18 +75,6 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       ! testing different memory structures
 !      NR_vode=0
       call iterate_ne(JH_vode, JHe_vode, z_vode, U, T_vode, nh, ne_vode, nh0, nhp, nhe0, nhep, nhepp)
-      print_radius = 1
-      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
-!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
-!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
-!           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
-!         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
-       print *, 'fn_vode = ', fn_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'NR_vode = ', NR_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
-      end if
 
       ! Convert species to CGS units: 
       ne_vode = nh * ne_vode
@@ -83,12 +95,12 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
          ! Convert to the actual term to be used in e_out = e_in + dt*energy
          energy  = energy / rho_vode * (1.0d0+z_vode)
          ne_vode = ne_vode / nh
-      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
+      if ( &!!((ABS(i_vode-33) .lt. print_radius  .and. &
+           !!ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) )then
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
-!!           ((ABS(i_vode-29) .lt. print_radius  .and. &
-!!           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
 !       print *, 'TMAX', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
@@ -138,15 +150,15 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       ! Convert to the actual term to be used in e_out = e_in + dt*energy
       a = 1.d0 / (1.d0 + z_vode)
       energy = energy / rho_vode / a
-      if ( ((ABS(i_vode-33) .lt. print_radius  .and. &
-           ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
+      if ( &!!((ABS(i_vode-33) .lt. print_radius  .and. &
+           !!ABS(j_vode-45).lt.print_radius .and. ABS(k_vode-22).lt.print_radius )) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
 !           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
            ((ABS(i_vode-29) .lt. print_radius  .and. &
            ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
-       print *, 'TMED', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'TMED', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'energy = ', energy, 'at (i,j,k) ',i_vode,j_vode,k_vode
 !       print *, 'rho_heat = ', rho_heat, 'at (i,j,k) ',i_vode,j_vode,k_vode
        print *, 'rho_vd = ', rho_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode

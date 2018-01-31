@@ -1,0 +1,3 @@
+      INTEGER G_DEBUG
+      COMMON /G_COMMON/ G_DEBUG
+      SAVE /G_COMMON/

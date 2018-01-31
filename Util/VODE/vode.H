@@ -21,3 +21,5 @@
       SAVE /DVOD01/, /DVOD02/
 
 !$omp threadprivate(/DVOD01/,/DVOD02/)
+
+       include "g_debug.h"

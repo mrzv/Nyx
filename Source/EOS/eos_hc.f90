@@ -516,6 +516,7 @@ module eos_module
       use atomic_rates_module, only: this_z, YHELIUM
       use vode_aux_module, only: i_vode,j_vode,k_vode, NR_vode
 
+      include "g_debug.h"
       integer :: i
 
       integer, intent(in) :: JH, JHe
@@ -561,14 +562,25 @@ module eos_module
          df  = 1.0d0 - dnhp_dne - dnhep_dne - 2.0d0*dnhepp_dne
          dne = f/df
 
+      print_radius = 1
+      if ( &!!((ABS(i_vode-33) .le. print_radius  .and. &
+           !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+      if(g_debug.eq.0) then
+         print*, 'No Jac EOS'
+      else
+         print*, 'Yes Jac EOS'
+      end if
+       print *, 'ne = ', ne, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'eps = ', eps, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'ne+eps = ', (ne+eps), 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'dne = ', dne, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
+       print *, 'xacc = ', xacc, 'at iter', i,'at (i,j,k) ',i_vode,j_vode,k_vode
+      end if
+
          ne = max((ne-dne), 0.0d0)
-!      print_radius = 2
-!      if ( ((ABS(i_vode-33) .le. print_radius  .and. &
-!           ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
-!       print *, 'ne = ', ne, 'at (i,j,k) ',i_vode,j_vode,k_vode
-!       print *, 'dne = ', dne, 'at (i,j,k) ',i_vode,j_vode,k_vode
-!       print *, 'xacc = ', xacc, 'at (i,j,k) ',i_vode,j_vode,k_vode
-!      end if
+
          if (abs(dne) < xacc) exit
 
          if (i .gt. 10) then
@@ -600,6 +612,9 @@ module eos_module
                                      AlphaHp, AlphaHep, AlphaHepp, Alphad, &
                                      GammaeH0, GammaeHe0, GammaeHep, &
                                      ggh0, gghe0, gghep
+      use vode_aux_module, only: i_vode,j_vode,k_vode, NR_vode
+
+      include "g_debug.h"
 
       integer, intent(in) :: JH, JHe
       real(rt), intent(in   ) :: U, nh, ne
@@ -609,7 +624,7 @@ module eos_module
       real(rt) :: mu, tmp, logT, flo, fhi
       real(rt), parameter :: smallest_val=tiny(1.0d0)
       integer :: j
-
+      integer :: print_radius
 
       mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne)
       t  = gamma_minus_1*MPROTON/BOLTZMANN * U * mu
@@ -619,6 +634,7 @@ module eos_module
          nhp   = 1.0d0
          nhep  = 0.0d0
          nhepp = YHELIUM
+         print*,'logT = ',logT
          return
       endif
 
@@ -631,6 +647,19 @@ module eos_module
       fhi = tmp - j
       flo = 1.0d0 - fhi
       j = j + 1 ! F90 arrays start with 1
+
+      print_radius = 1
+      if ( &!!((ABS(i_vode-33) .le. print_radius  .and. &
+           !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+      if(g_debug.eq.0) then
+         print*, 'No Jac ionn EOS'
+      else
+         print*, 'Yes Jac ionn EOS'
+      end if
+       print *, 'j = ', j, 'at (i,j,k) ',i_vode,j_vode,k_vode
+      end if
 
       ahp   = flo*AlphaHp  (j) + fhi*AlphaHp  (j+1)
       ahep  = flo*AlphaHep (j) + fhi*AlphaHep (j+1)

@@ -219,8 +219,10 @@ C-----------------------------------------------------------------------
 C
 C Call the nonlinear system solver. ------------------------------------
 C
+C      WRITE(*,*) 'Begining nonlinear solver'
       CALL VNLS (Y, YH, LDYH, VSAV, SAVF, EWT, ACOR, IWM, WM,
      1           F, JAC, PSOL, NFLAG, RPAR, IPAR)
+C      WRITE(*,*) 'Ending nonlinear solver'
 C
       IF (NFLAG .EQ. 0) GO TO 450
 C-----------------------------------------------------------------------

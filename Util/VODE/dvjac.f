@@ -77,9 +77,11 @@ C
       DOUBLE PRECISION DVNORM
       PARAMETER(ONE = 1.0D0, THOU = 1000.0D0, ZERO = 0.0D0, PT1 = 0.1D0)
 C
+      G_DEBUG=1
       IERPJ = 0
       HRL1 = H*RL1
 C See whether J should be evaluated (JOK = -1) or not (JOK = 1). -------
+C      WRITE(*,*) 'Beginning dvjac.f'
       JOK = JSV
       IF (JSV .EQ. 1) THEN
         IF (NST .EQ. 0 .OR. NST .GT. NSLJ+MSBJ) JOK = -1
@@ -144,6 +146,7 @@ C Multiply Jacobian by scalar, add identity, and do LU decomposition. --
       NLU = NLU + 1
       CALL DGEFA (WM(3), N, N, IWM(31), IER)
       IF (IER .NE. 0) IERPJ = 1
+      G_DEBUG=0
       RETURN
       ENDIF
 C End of code block for MITER = 1 or 2. --------------------------------
@@ -166,8 +169,10 @@ C If MITER = 3, construct a diagonal approximation to J and P. ---------
         IF (ABS(DI) .EQ. ZERO) GO TO 330
         WM(I+2) = PT1*R0/DI
  320    CONTINUE
+      G_DEBUG=0
       RETURN
- 330  IERPJ = 1
+ 330  G_DEBUG=0
+      IERPJ = 1
       RETURN
       ENDIF
 C End of code block for MITER = 3. -------------------------------------
@@ -241,8 +246,10 @@ C Multiply Jacobian by scalar, add identity, and do LU decomposition.
       NLU = NLU + 1
       CALL DGBFA (WM(3), MEBAND, N, ML, MU, IWM(31), IER)
       IF (IER .NE. 0) IERPJ = 1
+      G_DEBUG=0
       RETURN
 C End of code block for MITER = 4 or 5. --------------------------------
 C
 C----------------------- End of Subroutine DVJAC -----------------------
+      G_DEBUG=0
       END
