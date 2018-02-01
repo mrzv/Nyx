@@ -529,6 +529,7 @@ module eos_module
       real(rt) :: dnhp_dne, dnhep_dne, dnhepp_dne, dne
       character(len=128) :: errmsg
       integer :: print_radius
+      CHARACTER(LEN=80) :: FMT
 
       ! Check if we have interpolated to this z
       if (abs(z-this_z) .gt. xacc*z) then
@@ -567,16 +568,12 @@ module eos_module
            !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
            ((ABS(i_vode-29) .lt. print_radius  .and. &
            ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
       if(g_debug.eq.0) then
-         print*, 'No Jac EOS'
+         print(FMT), 'NJine:',i,U,ne,dne,eps
       else
-         print*, 'Yes Jac EOS'
+         print(FMT), 'YJine:',i,U,ne,dne,eps
       end if
-       print *, 'ne = ', ne, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'eps = ', eps, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'ne+eps = ', (ne+eps), 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'dne = ', dne, 'at iter', i, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'xacc = ', xacc, 'at iter', i,'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
 
          ne = max((ne-dne), 0.0d0)
@@ -625,6 +622,7 @@ module eos_module
       real(rt), parameter :: smallest_val=tiny(1.0d0)
       integer :: j
       integer :: print_radius
+      CHARACTER(LEN=80) :: FMT
 
       mu = (1.0d0+4.0d0*YHELIUM) / (1.0d0+YHELIUM+ne)
       t  = gamma_minus_1*MPROTON/BOLTZMANN * U * mu
@@ -653,12 +651,12 @@ module eos_module
            !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
            ((ABS(i_vode-29) .lt. print_radius  .and. &
            ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
       if(g_debug.eq.0) then
-         print*, 'No Jac ionn EOS'
+         print(FMT), 'NJion:',j,U,ne,logT,AlphaHep(j)
       else
-         print*, 'Yes Jac ionn EOS'
+         print(FMT), 'YJion:',j,U,ne,logT,AlphaHep(j)
       end if
-       print *, 'j = ', j, 'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
 
       ahp   = flo*AlphaHp  (j) + fhi*AlphaHp  (j+1)

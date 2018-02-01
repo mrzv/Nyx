@@ -33,7 +33,7 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
       real(rt) :: nh, nh0, nhp, nhe0, nhep, nhepp
       integer :: j
       integer :: print_radius
-
+      CHARACTER(LEN=80) :: FMT
 
       fn_vode=fn_vode+1;
       print_radius = 1
@@ -45,16 +45,13 @@ subroutine f_rhs(num_eq, time, e_in, energy, rpar, ipar)
            ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
       if(g_debug.eq.0) then
-         print*, 'No Jac f_rhs'
+         print(FMT), 'NJfrh:',fn_vode,e_in,rho_vode,T_vode,time
       else
-         print*, 'Yes Jac f_rhs'
+         print(FMT), 'YJfrh:',fn_vode,e_in,rho_vode,T_vode,time
       end if
-       print *, 'time = ', time, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'e_in f_rhs = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'rho_vode f_rhs = ', rho_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'fn_vode = ', fn_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'NR_vode = ', NR_vode, 'at (i,j,k) ',i_vode,j_vode,k_vode
+
       end if
 
       if (e_in(1) .lt. 0.d0) &

@@ -210,6 +210,7 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     use amrex_fort_module, only : rt => amrex_real
     use vode_aux_module, only: rho_vode, T_vode, ne_vode, &
                                i_vode, j_vode, k_vode, fn_vode, NR_vode
+    use meth_params_module, only: STRANG_COMP
     implicit none
 
     include "g_debug.h"
@@ -274,6 +275,7 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     real(rt) :: rpar
     integer          :: ipar
     integer          :: print_radius
+    CHARACTER(LEN=80) :: FMT
 
     EXTERNAL jac, f_rhs
     
@@ -321,9 +323,15 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
            print *, 'Entering dvode'
-           print *, 'rho_in1= ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-           print *, 'e_in1= ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-           print *, 'T_in1= ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
+      if(g_debug.eq.0) then
+         print(FMT), 'NJis1:',STRANG_COMP,e_in,e_out,T_in, T_out
+      else
+         print(FMT), 'YJis1:',STRANG_COMP,e_in,e_out,T_in, T_out
+      end if
+!           print *, 'rho_in1= ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!           print *, 'e_in1= ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!           print *, 'T_in1= ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
  end if
     
     !calling dvode
@@ -352,13 +360,19 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
        print *, 'Exited dvode'
-       print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'rho_in = ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'e_in = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'e_ot = ', e_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'T_in = ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'T_ot = ', T_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
-       print *, 'atol = ', atol(1), 'at (i,j,k) ',i_vode,j_vode,k_vode
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
+      if(g_debug.eq.0) then
+         print(FMT), 'NJis2:',STRANG_COMP,e_in,e_out,T_in, T_out
+      else
+         print(FMT), 'YJis2:',STRANG_COMP,e_in,e_out,T_in, T_out
+      end if
+!       print *, 'HU = ', rwork(11), 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'rho_in = ', rho_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'e_in = ', e_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'e_ot = ', e_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'T_in = ', T_in, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'T_ot = ', T_out, 'at (i,j,k) ',i_vode,j_vode,k_vode
+!       print *, 'atol = ', atol(1), 'at (i,j,k) ',i_vode,j_vode,k_vode
       end if
 
 !      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
