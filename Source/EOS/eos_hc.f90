@@ -21,6 +21,7 @@ module eos_module
 
   real(rt), public :: xacc ! EOS Newton-Raphson convergence tolerance
   real(c_double), public :: vode_rtol, vode_atol_scaled ! VODE integration tolerances
+  logical, public :: condensed_region ! VODE integration tolerances
 
   contains
 
@@ -538,7 +539,13 @@ module eos_module
       end if
 
       i = 0
-      ne = 1.0d0 ! 0 is a bad guess
+      ne = max(1.0d0, ne) ! 0 is a bad guess
+      if(condensed_region .eqv. .true.) then
+         xacc = 1e-4
+      else
+         xacc = 1e-6
+      end if
+
       do  ! Newton-Raphson solver
          i = i + 1
 
@@ -574,6 +581,8 @@ module eos_module
       else
          print(FMT), 'YJine:',i,U,ne,dne,eps
       end if
+         print(FMT), 'fdine:',i,f,nhp,nhep,nhepp
+         print(FMT), 'fdine:',i,df,dnhp_dne,dnhep_dne,dnhepp_dne
       end if
 
          ne = max((ne-dne), 0.0d0)
@@ -646,19 +655,6 @@ module eos_module
       flo = 1.0d0 - fhi
       j = j + 1 ! F90 arrays start with 1
 
-      print_radius = 1
-      if ( &!!((ABS(i_vode-33) .le. print_radius  .and. &
-           !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
-           ((ABS(i_vode-29) .lt. print_radius  .and. &
-           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
-      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
-      if(g_debug.eq.0) then
-         print(FMT), 'NJion:',j,U,ne,logT,AlphaHep(j)
-      else
-         print(FMT), 'YJion:',j,U,ne,logT,AlphaHep(j)
-      end if
-      end if
-
       ahp   = flo*AlphaHp  (j) + fhi*AlphaHp  (j+1)
       ahep  = flo*AlphaHep (j) + fhi*AlphaHep (j+1)
       ahepp = flo*AlphaHepp(j) + fhi*AlphaHepp(j+1)
@@ -676,6 +672,27 @@ module eos_module
          gghe0ne  = 0.0d0
          gghepne  = 0.0d0
       endif
+
+      print_radius = 1
+      if ( &!!((ABS(i_vode-33) .le. print_radius  .and. &
+           !!ABS(j_vode-45).le.print_radius .and. ABS(k_vode-22).le.print_radius )) then
+           ((ABS(i_vode-29) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
+      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
+      if(g_debug.eq.0) then
+         print(FMT), 'NJion:',j,U,ne,logT,AlphaHep(j)
+      else
+         print(FMT), 'YJion:',j,U,ne,logT,AlphaHep(j)
+      end if
+
+      print*, "JH = ", JH
+      print*, "JHe = ", JHe
+      print*, "nh = ", nh
+      print(FMT), 'a ion:',j,ahp,ahep,ahepp,ad
+      print(FMT), 'b ion:',j,geh0,gehe0,gehep,ad
+      print*, "ne = ", ne
+      print(FMT), 'c ion:',j,ggh0ne,gghe0ne,gghepne,ad
+      end if
 
       ! H+
       nhp = 1.0d0 - ahp/(ahp + geh0 + ggh0ne)

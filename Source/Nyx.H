@@ -698,6 +698,9 @@ protected:
     // if true, define an additional source term
     static int add_ext_src;
 
+    // if true, incorporate the source term through sdc-splitting
+    static int sdc_split;
+
     // specifies the heating/cooling source term
     static int heat_cool_type;
 

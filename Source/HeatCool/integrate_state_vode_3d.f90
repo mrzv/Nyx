@@ -32,7 +32,7 @@ subroutine integrate_state_vode(lo, hi, &
     use amrex_fort_module, only : rt => amrex_real
     use meth_params_module, only : NVAR, URHO, UEDEN, UEINT, &
                                    NDIAG, TEMP_COMP, NE_COMP, ZHI_COMP, &
-                                   SFNR_COMP,  SSNR_COMP, DIAG1_COMP, STRANG_COMP, gamma_minus_1
+                                   SFNR_COMP,  SSNR_COMP, DIAG1_COMP, DIAG2_COMP, STRANG_COMP, gamma_minus_1
     use bl_constants_module, only: M_PI
     use eos_params_module
     use network
@@ -61,6 +61,8 @@ subroutine integrate_state_vode(lo, hi, &
     real(rt) :: T_orig, ne_orig, e_orig
     real(rt) :: T_out , ne_out , e_out, mu, mean_rhob, T_H, T_He
     integer :: fn_out
+    integer :: print_radius
+    CHARACTER(LEN=80) :: FMT
     real(rt) :: species(5)
 
 !    STRANG_COMP=SFNR_COMP
@@ -141,7 +143,17 @@ subroutine integrate_state_vode(lo, hi, &
                 i_vode = i
                 j_vode = j
                 k_vode = k
+          print_radius = 1
+      if ( ((ABS(i_vode-58) .lt. print_radius  .and. &
+           ABS(j_vode-42).lt.print_radius .and. ABS(k_vode-52).lt.print_radius ))  &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+!           ((i_vode .eq. 33 .and. j_vode.eq.45.and. k_vode.eq.22) ) .or. &
+          .and. .not. ((ABS(i_vode-28) .lt. print_radius  .and. &
+           ABS(j_vode-21).lt.print_radius .and. ABS(k_vode-25).lt.print_radius )) )then
 
+ FMT="(A6,I1,/,ES21.15,/,ES21.15E2,/,ES21.15,/,ES21.15,/,ES21.15,/,ES21.15,/,ES21.15)"
+      print(FMT), "IntSta",STRANG_COMP, a, half_dt, rho, T_orig, ne_orig, e_orig
+end if
                 call vode_wrapper(half_dt,rho,T_orig,ne_orig,e_orig, &
                                               T_out ,ne_out ,e_out, fn_out)
 
@@ -194,7 +206,8 @@ subroutine integrate_state_vode(lo, hi, &
 !                   diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
 !               else
                    diag_eos(i,j,k, STRANG_COMP) = fn_out
-                   diag_eos(i,j,k, DIAG1_COMP) = e_out-e_orig
+                   diag_eos(i,j,k, DIAG1_COMP) = half_dt
+                   diag_eos(i,j,k, DIAG2_COMP) = a
 !                endif
 
 
@@ -211,6 +224,11 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     use vode_aux_module, only: rho_vode, T_vode, ne_vode, &
                                i_vode, j_vode, k_vode, fn_vode, NR_vode
     use meth_params_module, only: STRANG_COMP
+    use bl_constants_module, only: M_PI
+    use eos_params_module
+    use eos_module, only: condensed_region
+    use fundamental_constants_module
+    use comoving_module, only: comoving_h, comoving_OmB
     implicit none
 
     include "g_debug.h"
@@ -219,6 +237,8 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     real(rt), intent(in   ) :: rho_in, T_in, ne_in, e_in
     real(rt), intent(  out) ::         T_out,ne_out,e_out
     integer,  intent(  out) ::         fn_out
+
+    real(rt) mean_rhob
 
     ! Set the number of independent variables -- this should be just "e"
     integer, parameter :: NEQ = 1
@@ -306,7 +326,15 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
     y(1) = e_in
 
     ! Set the tolerances.  
-    atol(1) = 1.d-4 * e_in
+    mean_rhob = comoving_OmB * 3.d0*(comoving_h*100.d0)**2 / (8.d0*M_PI*Gconst)
+    if((rho_vode/mean_rhob .ge. 1.d2) .and. (T_vode .le. 4.5d5).and. .false.) then
+!    if((rho_vode/mean_rhob .ge. 1.d2) .and. (T_vode .ge. 9.5d4) .and. (T_vode .le. 5.5d5)) then
+       atol(1) = 1.d-2 * e_in
+       condensed_region = .true.
+    else
+       atol(1) = 1.d-4 * e_in
+       condensed_region = .false.
+    end if
     rtol(1) = 1.d-4
 
 !      if (i_vode .eq. 52 .and. j_vode.eq.52.and. k_vode.eq.30) then
@@ -323,7 +351,7 @@ subroutine vode_wrapper(dt, rho_in, T_in, ne_in, e_in, T_out, ne_out, e_out, fn_
 !           ((i_vode .eq. 94 .and. j_vode.eq.112.and. k_vode.eq.40) ) ) then
 !         print *, 'at i=',i_vode,'j=',j_vode,'k=',k_vode, 'fn_vode='fn_vode, 'NR_vode=', NR_vode        
            print *, 'Entering dvode'
-      FMT = "(A6, I4, ES15.5, ES15.5E3, ES15.5, ES15.5)"
+      FMT = "(A6,\,I4,\, ES15.5,\, ES15.5E3,\, ES15.5,\, ES15.5)"
       if(g_debug.eq.0) then
          print(FMT), 'NJis1:',STRANG_COMP,e_in,e_out,T_in, T_out
       else

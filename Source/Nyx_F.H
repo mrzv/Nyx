@@ -159,7 +159,8 @@ extern "C"
      const amrex::Real* a_old, const amrex::Real* a_new,
      const amrex::Real* e_added, const amrex::Real* ke_added,
      const int* print_fortran_warnings,
-     const int* do_gas);
+     const int* do_gas,
+     const int* sdc_split);
 
   void time_center_sources
     (const int lo[], const int hi[], BL_FORT_FAB_ARG(S_new),

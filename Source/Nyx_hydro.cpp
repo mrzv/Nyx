@@ -86,6 +86,9 @@ Nyx::just_the_hydro (Real time,
        {
           std::cout << "Source terms are handled with strang splitting" << std::endl; 
        } else {
+	 if(sdc_split)
+	   std::cout << "Source terms are handled with sdc splitting" << std::endl; 
+	 else
           std::cout << "Source terms are handled with predictor/corrector" << std::endl; 
        }
     }
@@ -128,6 +131,9 @@ Nyx::just_the_hydro (Real time,
 
     if (add_ext_src && strang_split) 
         strang_first_step(time,dt,S_old_tmp,D_old_tmp);
+
+    if (add_ext_src && sdc_split)
+
 
 #ifdef _OPENMP
 #pragma omp parallel reduction(max:courno) reduction(+:e_added,ke_added)
@@ -173,7 +179,7 @@ Nyx::just_the_hydro (Real time,
              BL_TO_FORTRAN(flux[0]),
              BL_TO_FORTRAN(flux[1]),
              BL_TO_FORTRAN(flux[2]),
-             &cflLoc, &a_old, &a_new, &se, &ske, &print_fortran_warnings, &do_grav);
+             &cflLoc, &a_old, &a_new, &se, &ske, &print_fortran_warnings, &do_grav, &sdc_split);
 
         for (int i = 0; i < BL_SPACEDIM; ++i) {
           fluxes[i][mfi].copy(flux[i], mfi.nodaltilebox(i));
@@ -199,8 +205,10 @@ Nyx::just_the_hydro (Real time,
 	 MultiFab::Copy(D_new,ext_src_old,0,Ssnr_comp,1,0);
 	 } else */{
 	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
-	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,3,0);
+	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,4,0);
+	 /* Leave/use if getting data from HydroFortran
 	 MultiFab::Copy(D_new,ext_src_old,0,Diag2_comp,1,0);
+	 */
 	 }
        /*
 	 ext_src_old.setVal(0);

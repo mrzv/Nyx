@@ -126,6 +126,7 @@ Real Nyx::comoving_h;
 
 int Nyx::do_hydro = -1;
 int Nyx::add_ext_src = 0;
+int Nyx::sdc_split = 0;
 int Nyx::heat_cool_type = 0;
 int Nyx::strang_split = 0;
 
@@ -365,7 +366,11 @@ Nyx::read_params ()
 #endif
 
     pp.query("add_ext_src", add_ext_src);
+    pp.query("sdc_split", sdc_split);
     pp.query("strang_split", strang_split);
+
+    if (sdc_split == 1 && strang_split == 1)
+       amrex::Error("Nyx::must set strang_split to 0 if sdc_split = 1 ");
 
 #ifdef FORCING
     pp.get("do_forcing", do_forcing);
@@ -2499,6 +2504,7 @@ Nyx::AddProcsToComp(Amr *aptr, int nSidecarProcs, int prevSidecarProcs,
         allInts.push_back(do_hydro);
         allInts.push_back(do_grav);
         allInts.push_back(add_ext_src);
+        allInts.push_back(sdc_split);
         allInts.push_back(heat_cool_type);
         allInts.push_back(inhomo_reion);
         allInts.push_back(strang_split);
@@ -2560,6 +2566,7 @@ Nyx::AddProcsToComp(Amr *aptr, int nSidecarProcs, int prevSidecarProcs,
         do_hydro = allInts[count++];
         do_grav = allInts[count++];
         add_ext_src = allInts[count++];
+        sdc_split = allInts[count++];
         heat_cool_type = allInts[count++];
         inhomo_reion = allInts[count++];
         strang_split = allInts[count++];

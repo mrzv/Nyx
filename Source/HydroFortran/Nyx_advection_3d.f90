@@ -15,7 +15,7 @@
            flux1,flux1_l1,flux1_l2,flux1_l3,flux1_h1,flux1_h2,flux1_h3, &
            flux2,flux2_l1,flux2_l2,flux2_l3,flux2_h1,flux2_h2,flux2_h3, &
            flux3,flux3_l1,flux3_l2,flux3_l3,flux3_h1,flux3_h2,flux3_h3, &
-           courno,a_old,a_new,e_added,ke_added,print_fortran_warnings,do_grav) &
+           courno,a_old,a_new,e_added,ke_added,print_fortran_warnings,do_grav,sdc_split) &
            bind(C, name="fort_advance_gas")
 
       use amrex_fort_module, only : rt => amrex_real
@@ -26,7 +26,7 @@
 
       implicit none
 
-      integer lo(3),hi(3),print_fortran_warnings,do_grav
+      integer lo(3),hi(3),print_fortran_warnings,do_grav,sdc_split
       integer uin_l1,uin_l2,uin_l3,uin_h1,uin_h2,uin_h3
       integer uout_l1,uout_l2,uout_l3,uout_h1,uout_h2,uout_h3
       integer ugdnvx_l1,ugdnvx_l2,ugdnvx_l3,ugdnvx_h1,ugdnvx_h2,ugdnvx_h3
@@ -132,7 +132,7 @@
                   flux1,flux1_l1,flux1_l2,flux1_l3,flux1_h1,flux1_h2,flux1_h3, &
                   flux2,flux2_l1,flux2_l2,flux2_l3,flux2_h1,flux2_h2,flux2_h3, &
                   flux3,flux3_l1,flux3_l2,flux3_l3,flux3_h1,flux3_h2,flux3_h3, &
-                  div,pdivu,lo,hi,dx,dy,dz,dt,a_old,a_new)
+                  div,pdivu,lo,hi,dx,dy,dz,dt,a_old,a_new,sdc_split)
 
       ! We are done with these here so can go ahead and free up the space.
       call bl_deallocate(q)
@@ -1165,7 +1165,7 @@
                       flux1,flux1_l1,flux1_l2,flux1_l3,flux1_h1,flux1_h2,flux1_h3, &
                       flux2,flux2_l1,flux2_l2,flux2_l3,flux2_h1,flux2_h2,flux2_h3, &
                       flux3,flux3_l1,flux3_l2,flux3_l3,flux3_h1,flux3_h2,flux3_h3, &
-                      div,pdivu,lo,hi,dx,dy,dz,dt,a_old,a_new)
+                      div,pdivu,lo,hi,dx,dy,dz,dt,a_old,a_new,sdc_split)
 
       use amrex_fort_module, only : rt => amrex_real
       use bl_constants_module
@@ -1174,7 +1174,7 @@
 
       implicit none
 
-      integer lo(3), hi(3)
+      integer lo(3), hi(3), sdc_split
       integer   uin_l1,  uin_l2,  uin_l3,  uin_h1,  uin_h2,  uin_h3
       integer  uout_l1, uout_l2, uout_l3, uout_h1, uout_h2, uout_h3
       integer   src_l1,  src_l2,  src_l3,  src_h1,  src_h2,  src_h3
@@ -1256,84 +1256,147 @@
       dt_a_new    = dt / a_new
       a_newsq_inv = ONE / a_newsq
 
-      do n = 1, NVAR
 
-         ! update everything else with fluxes and source terms
-         do k = lo(3),hi(3)
-            do j = lo(2),hi(2)
-               do i = lo(1),hi(1)
+      if(sdc_split) then
+         do n = 1, NVAR
 
-                  ! Density
-                  if (n .eq. URHO) then
-                     uout(i,j,k,n) = uin(i,j,k,n) + &
-                          ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
-                          +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
-                          +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * volinv &
-                          +   dt * src(i,j,k,n) ) * a_half_inv
+            ! update everything else with fluxes and source terms
+            do k = lo(3),hi(3)
+               do j = lo(2),hi(2)
+                  do i = lo(1),hi(1)
 
-                  ! Momentum
-                  else if (n .ge. UMX .and. n .le. UMZ) then
-                     uout(i,j,k,n) = a_old*uin(i,j,k,n) &
-                          + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
-                          +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
-                          +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
-                          +   dt * src(i,j,k,n)
-                     uout(i,j,k,n) = uout(i,j,k,n) * a_new_inv
+                     ! Density
+                     if (n .eq. URHO) then
+                        uout(i,j,k,n) =  &
+                             ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * volinv &
+                             +   dt * src(i,j,k,n) ) * a_half_inv
 
-                  ! (rho E)
-                  else if (n .eq. UEDEN) then
-                     uout(i,j,k,n) = a_oldsq*uin(i,j,k,n) &
-                          + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
-                          +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
-                          +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
-                          +   a_half * dt * src(i,j,k,n)  &
-                          +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT)
-                     uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
+                        ! Momentum
+                     else if (n .ge. UMX .and. n .le. UMZ) then
+                        uout(i,j,k,n) = a_old*uin(i,j,k,n) &
+                             + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
+                             +   dt * src(i,j,k,n)
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_new_inv
 
-                  ! (rho e)
-                  else if (n .eq. UEINT) then
+                        ! (rho E)
+                     else if (n .eq. UEDEN) then
+                        uout(i,j,k,n) = &
+                               ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
+                             +   a_half * dt * src(i,j,k,n)  &
+                             +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT)
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
 
-                     uout(i,j,k,n) = a_oldsq*uin(i,j,k,n) &
-                          + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
-                          +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
-                          +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
-                          +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT) & 
-                          +   a_half * dt * src(i,j,k,n)
+                        ! (rho e)
+                     else if (n .eq. UEINT) then
 
-                     ! *********************************************************************************
-                     ! This is the version where "pdivu" is actually just divu
-                     uout(i,j,k,n) = uout(i,j,k,n) &
-                          -   a_half * dt * (HALF * gamma_minus_1 * uin(i,j,k,n)) * pdivu(i,j,k)
+                        uout(i,j,k,n) =  &
+                               ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
+                             +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT) & 
+                             +   a_half * dt * src(i,j,k,n)
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
 
-                     uout(i,j,k,n) = uout(i,j,k,n) / &
-                         ( ONE + a_half * dt * (HALF * gamma_minus_1 * pdivu(i,j,k)) * a_newsq_inv )
+                        ! (rho X_i) and (rho adv_i) and (rho aux_i)
+                     else
+                        uout(i,j,k,n) = uin(i,j,k,n) + &
+                             ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
+                             +   dt * src(i,j,k,n) ) * a_half_inv
+                     endif
 
-                     ! *********************************************************************************
-                     ! This is the original version
-                     ! uout(i,j,k,n) = uout(i,j,k,n) -  a_half * dt * pdivu(i,j,k)
-                     ! *********************************************************************************
-
-                     uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
-
-                     ! *********************************************************************************
-                     ! Adding a hacky output for ratio of output - input uout(UEINT)/uout(rho)-uin(UEINT)/(uin(rho))
-                     !  src(i,j,k,n)= 
-                     ! *********************************************************************************
-                     src(i,j,k,1)= uout(i,j,k,UEINT)/uout(i,j,k,URHO)-uin(i,j,k,UEINT)/uin(i,j,k,URHO);
-
-                  ! (rho X_i) and (rho adv_i) and (rho aux_i)
-                  else
-                     uout(i,j,k,n) = uin(i,j,k,n) + &
-                          ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
-                          +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
-                          +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
-                          +   dt * src(i,j,k,n) ) * a_half_inv
-                  endif
-
+                  enddo
                enddo
             enddo
          enddo
-      enddo
+
+      else
+         do n = 1, NVAR
+
+            ! update everything else with fluxes and source terms
+            do k = lo(3),hi(3)
+               do j = lo(2),hi(2)
+                  do i = lo(1),hi(1)
+
+                     ! Density
+                     if (n .eq. URHO) then
+                        uout(i,j,k,n) = uin(i,j,k,n) + &
+                             ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * volinv &
+                             +   dt * src(i,j,k,n) ) * a_half_inv
+
+                        ! Momentum
+                     else if (n .ge. UMX .and. n .le. UMZ) then
+                        uout(i,j,k,n) = a_old*uin(i,j,k,n) &
+                             + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
+                             +   dt * src(i,j,k,n)
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_new_inv
+
+                        ! (rho E)
+                     else if (n .eq. UEDEN) then
+                        uout(i,j,k,n) = a_oldsq*uin(i,j,k,n) &
+                             + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
+                             +   a_half * dt * src(i,j,k,n)  &
+                             +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT)
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
+
+                        ! (rho e)
+                     else if (n .eq. UEINT) then
+
+                        uout(i,j,k,n) = a_oldsq*uin(i,j,k,n) &
+                             + ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n) ) * a_half * volinv &
+                             +   a_half * (a_new - a_old) * ( TWO - THREE * gamma_minus_1) * uin(i,j,k,UEINT) & 
+                             +   a_half * dt * src(i,j,k,n)
+
+                        ! *********************************************************************************
+                        ! This is the version where "pdivu" is actually just divu
+                        uout(i,j,k,n) = uout(i,j,k,n) &
+                             -   a_half * dt * (HALF * gamma_minus_1 * uin(i,j,k,n)) * pdivu(i,j,k)
+
+                        uout(i,j,k,n) = uout(i,j,k,n) / &
+                             ( ONE + a_half * dt * (HALF * gamma_minus_1 * pdivu(i,j,k)) * a_newsq_inv )
+
+                        ! *********************************************************************************
+                        ! This is the original version
+                        ! uout(i,j,k,n) = uout(i,j,k,n) -  a_half * dt * pdivu(i,j,k)
+                        ! *********************************************************************************
+
+                        uout(i,j,k,n) = uout(i,j,k,n) * a_newsq_inv
+
+                        ! *********************************************************************************
+                        ! Adding a hacky output for ratio of output - input uout(UEINT)/uout(rho)-uin(UEINT)/(uin(rho))
+                        !  src(i,j,k,n)= 
+                        ! *********************************************************************************
+                        src(i,j,k,1)= uout(i,j,k,UEINT)/uout(i,j,k,URHO)-uin(i,j,k,UEINT)/uin(i,j,k,URHO);
+
+                        ! (rho X_i) and (rho adv_i) and (rho aux_i)
+                     else
+                        uout(i,j,k,n) = uin(i,j,k,n) + &
+                             ( ( flux1(i,j,k,n) - flux1(i+1,j,k,n) &
+                             +   flux2(i,j,k,n) - flux2(i,j+1,k,n) &
+                             +   flux3(i,j,k,n) - flux3(i,j,k+1,n)) * volinv &
+                             +   dt * src(i,j,k,n) ) * a_half_inv
+                     endif
+
+                  enddo
+               enddo
+            enddo
+         enddo
+      endif
 
       do n = 1, NVAR
          if (n .eq. URHO) then
