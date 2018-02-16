@@ -384,6 +384,11 @@ public:
     void strang_first_step  (amrex::Real time, amrex::Real dt,  amrex::MultiFab& state, amrex::MultiFab&  dstate);
     void strang_second_step (amrex::Real time, amrex::Real dt,  amrex::MultiFab& state, amrex::MultiFab&  dstate);
 
+
+    void sdc_zeroth_step  (amrex::Real time, amrex::Real dt,  amrex::MultiFab& state, amrex::MultiFab&  dstate);
+    void sdc_first_step  (amrex::Real time, amrex::Real dt,  amrex::MultiFab& state, amrex::MultiFab&  dstate);
+    void sdc_second_step (amrex::Real time, amrex::Real dt,  amrex::MultiFab& state, amrex::MultiFab&  dstate);
+
     amrex::Real advance_particles_only (amrex::Real time, amrex::Real dt, int iteration, int ncycle);
 
     void moveKickDriftExact(amrex::Real dt);

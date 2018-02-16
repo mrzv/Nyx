@@ -206,7 +206,9 @@ end if
 !                   diag_eos(i,j,k, STRANG_COMP) = e_out-e_orig
 !               else
                    diag_eos(i,j,k, STRANG_COMP) = fn_out
-                   diag_eos(i,j,k, DIAG1_COMP) = half_dt
+                   !half_dt is half of larger dt
+                   ! mimics ext_src_hc source term
+                   diag_eos(i,j,k, DIAG1_COMP) = a * (e_out-e_orig)/half_dt
                    diag_eos(i,j,k, DIAG2_COMP) = a
 !                endif
 

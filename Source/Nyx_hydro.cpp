@@ -80,6 +80,8 @@ Nyx::just_the_hydro (Real time,
     MultiFab ext_src_old(grids, dmap, NUM_STATE, 3);
     ext_src_old.setVal(0);
 
+
+    // Output source term flag data
     if (add_ext_src && ParallelDescriptor::IOProcessor())
     {
        if (strang_split)
@@ -93,12 +95,21 @@ Nyx::just_the_hydro (Real time,
        }
     }
 
+
+    // If using predictor/corrector, get old source term for prediction????
     if (add_ext_src && !strang_split)
     {
+      if(!sdc_split)
+	{
 #ifndef NO_OLD_SRC
         get_old_source(prev_time, dt, ext_src_old);
 #endif //#ifndef NO_OLD_SRC
         ext_src_old.FillBoundary();
+	}
+      /*      else
+	{
+	  MultiFab::Copy(ext_src_old, D_old_tmp , ,Diag1_comp,1,0);
+	  }*/
     }
 
     // Define the gravity vector so we can pass this to ca_umdrv.
@@ -129,12 +140,19 @@ Nyx::just_the_hydro (Real time,
     MultiFab D_old_tmp(D_old.boxArray(), D_old.DistributionMap(), D_old.nComp(), NUM_GROW);
     FillPatch(*this, D_old_tmp, NUM_GROW, time, DiagEOS_Type, 0, D_old.nComp());
 
+
+    //
+    // Take first strang step from time to time+dt/2
+    // Output variables into temporary containers
+    //
     if (add_ext_src && strang_split) 
         strang_first_step(time,dt,S_old_tmp,D_old_tmp);
 
-    if (add_ext_src && sdc_split)
+    /*    if (add_ext_src && sdc_split)
+	  sdc_zeroth_step(time,dt,S_old_tmp,D_old_tmp);*/
 
 
+    // OPENMP loop over fort_advance_gas "advection"
 #ifdef _OPENMP
 #pragma omp parallel reduction(max:courno) reduction(+:e_added,ke_added)
 #endif
@@ -193,10 +211,14 @@ Nyx::just_the_hydro (Real time,
 
        } // end of omp parallel region
 
+       // Update Fab for variables used after advection
+
        // We copy old Temp and Ne to new Temp and Ne so that they can be used
        //    as guesses when we next need them.
        MultiFab::Copy(D_new,D_old,0,0,D_old.nComp()-2,0);
 
+
+       // Writes over old extra output variables with new extra output variables
        /*       bool track_diag_energy=false;
        if(track_diag_energy) {
 	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
@@ -214,6 +236,7 @@ Nyx::just_the_hydro (Real time,
 	 ext_src_old.setVal(0);
        */
 
+       // Fluxes
        if (do_reflux) {
          if (current) {
            for (int i = 0; i < BL_SPACEDIM ; i++) {
@@ -288,6 +311,7 @@ Nyx::just_the_hydro (Real time,
     }
 #endif
 
+    // Predictor-corrector source update
     if (add_ext_src && !strang_split)
     {
         get_old_source(prev_time, dt, ext_src_old);
@@ -311,6 +335,7 @@ Nyx::just_the_hydro (Real time,
         amrex::Abort("S_new has NaNs before the second strang call");
 #endif
 
+    // second strang
     // This returns updated (rho e), (rho E), and Temperature
     if (add_ext_src && strang_split)
         strang_second_step(cur_time,dt,S_new,D_new);
