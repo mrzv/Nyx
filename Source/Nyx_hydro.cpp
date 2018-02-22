@@ -148,8 +148,15 @@ Nyx::just_the_hydro (Real time,
     if (add_ext_src && strang_split) 
         strang_first_step(time,dt,S_old_tmp,D_old_tmp);
 
-    /*    if (add_ext_src && sdc_split)
-	  sdc_zeroth_step(time,dt,S_old_tmp,D_old_tmp);*/
+
+    //
+    // Gives us I^0 from integration, will add using previous I later
+    // Stores I^0 in D_old_tmp(diag_comp)
+    if (add_ext_src && sdc_split)
+      {
+      sdc_zeroth_step(time,dt,S_old_tmp,D_old_tmp, ext_src_old);
+      MultiFab::Copy(ext_src_old,D_old_tmp,Diag1_comp,Eint,1,0);
+      }
 
 
     // OPENMP loop over fort_advance_gas "advection"
@@ -184,7 +191,12 @@ Nyx::just_the_hydro (Real time,
             u_gdnv[i].setVal(1.e200);
         }
 
-        fort_advance_gas
+	// Get F^(n+1/2)
+	// Possibly unsafe if .5*dt+.5*dt~=dt
+	if(sdc_split)
+	  dt=.5*dt;
+
+	fort_advance_gas
             (&time, bx.loVect(), bx.hiVect(), 
              BL_TO_FORTRAN(state),
              BL_TO_FORTRAN(stateout),
@@ -213,28 +225,18 @@ Nyx::just_the_hydro (Real time,
 
        // Update Fab for variables used after advection
 
+       // If at end of sdc, now have fluxes in stateout (S_new) as well as momentum etc
+
        // We copy old Temp and Ne to new Temp and Ne so that they can be used
        //    as guesses when we next need them.
        MultiFab::Copy(D_new,D_old,0,0,D_old.nComp()-2,0);
 
 
        // Writes over old extra output variables with new extra output variables
-       /*       bool track_diag_energy=false;
-       if(track_diag_energy) {
-	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
-	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,1,0);
-	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
-	 MultiFab::Copy(D_new,ext_src_old,0,Ssnr_comp,1,0);
-	 } else */{
-	 // Might be inefficient, but this sets the new/output sfnr component without disturbing Temp or Ne from the first strang call
 	 MultiFab::Copy(D_new,D_old_tmp,Sfnr_comp,Sfnr_comp,4,0);
 	 /* Leave/use if getting data from HydroFortran
 	 MultiFab::Copy(D_new,ext_src_old,0,Diag2_comp,1,0);
 	 */
-	 }
-       /*
-	 ext_src_old.setVal(0);
-       */
 
        // Fluxes
        if (do_reflux) {
@@ -329,6 +331,19 @@ Nyx::just_the_hydro (Real time,
 
         compute_new_temp();
     } // end if (add_ext_src && !strang_split)
+
+    //
+    // Gives us I^1 from integration with F^(n+1/2) source
+    // Stores I^1 in D_new(diag1_comp)
+    if (add_ext_src && sdc_split)
+      {
+	//fix earlier halving of dt
+      dt=2*dt
+      sdc_first_step(time, dt, S_old, D_new, S_new);
+      MultiFab::Copy(ext_src_old,D_new,Diag1_comp,Eint,1,0);
+      }
+
+
 
 #ifndef NDEBUG
     if (S_new.contains_nan(Density, S_new.nComp(), 0))

@@ -1,6 +1,7 @@
 subroutine integrate_state_vode(lo, hi, &
                                 state   , s_l1, s_l2, s_l3, s_h1, s_h2, s_h3, &
                                 diag_eos, d_l1, d_l2, d_l3, d_h1, d_h2, d_h3, &
+                                src, src_l1, src_l2, src_l3, src_h1, src_h2, src_h3, &
                                 a, half_dt, min_iter, max_iter, s_comp)
 !
 !   Calculates the sources to be added later on.
@@ -50,8 +51,10 @@ subroutine integrate_state_vode(lo, hi, &
     integer         , intent(in) :: lo(3), hi(3)
     integer         , intent(in) :: s_l1, s_l2, s_l3, s_h1, s_h2, s_h3
     integer         , intent(in) :: d_l1, d_l2, d_l3, d_h1, d_h2, d_h3
+    integer         , intent(in) :: src_l1, src_l2, src_l3, src_h1, src_h2, src_h3
     real(rt), intent(inout) ::    state(s_l1:s_h1, s_l2:s_h2,s_l3:s_h3, NVAR)
     real(rt), intent(inout) :: diag_eos(d_l1:d_h1, d_l2:d_h2,d_l3:d_h3, NDIAG)
+    real(rt), intent(inout) ::    src(src_l1:src_h1, src_l2:src_h2,src_l3:src_h3, NVAR)
     real(rt), intent(in)    :: a, half_dt
     integer         , intent(inout) :: max_iter, min_iter
     integer         , intent(in   ) :: s_comp
@@ -118,6 +121,13 @@ subroutine integrate_state_vode(lo, hi, &
         do j = lo(2),hi(2)
             do i = lo(1),hi(1)
 
+!              !! Could possibly be more efficient by putting this outside the ijk loop
+!              if(s_comp==10) then
+!                state(i,j,k,URHO) = 0.d0
+!                state(i,j,k,UEINT) = 0.d0
+!                state(i,j,k,UEDEN) = 0.d0
+!              end if
+
                 ! Original values
                 rho     = state(i,j,k,URHO)
                 e_orig  = state(i,j,k,UEINT) / rho
@@ -154,6 +164,8 @@ subroutine integrate_state_vode(lo, hi, &
  FMT="(A6,I1,/,ES21.15,/,ES21.15E2,/,ES21.15,/,ES21.15,/,ES21.15,/,ES21.15,/,ES21.15)"
       print(FMT), "IntSta",STRANG_COMP, a, half_dt, rho, T_orig, ne_orig, e_orig
 end if
+
+
                 call vode_wrapper(half_dt,rho,T_orig,ne_orig,e_orig, &
                                               T_out ,ne_out ,e_out, fn_out)
 

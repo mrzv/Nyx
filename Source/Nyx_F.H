@@ -253,6 +253,7 @@ extern "C"
     (const int* lo, const int* hi,
      BL_FORT_FAB_ARG(state),
      BL_FORT_FAB_ARG(diag_eos),
+     BL_FORT_FAB_ARG(src),
      const amrex::Real* dx, const amrex::Real* time, 
      const amrex::Real* z, const amrex::Real* dt,
      const int* min_iter, const int* max_iter, const int* strang_comp);
