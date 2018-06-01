@@ -145,8 +145,13 @@ nyx_main (int argc, char* argv[])
      {
        amrptr->coarseTimeStep(stop_time);          // ---- Do a timestep.
 #ifdef HENSON
+       int periodic = 0;
+       for (int i = 0; i < 3; ++i)
+           periodic |= amrptr->Geom(0).isPeriodic(i) ? 1 << i : 0;
+
        henson_save_pointer("amr",  amrptr);        // redundant to do every timesetp, but negligible overhead
        henson_save_pointer("dmpc", Nyx::theDMPC());
+       henson_save_int("periodic", periodic);
        henson_yield();
 #endif
      } else {

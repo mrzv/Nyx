@@ -39,6 +39,8 @@ ifeq ($(USE_HENSON), TRUE)
   USERSuffix += .HENSON
 endif
 
+DIY_DIR ?= $(HOME)/Research/DIY/diy-mrzv
+
 ifeq ($(USE_GRAV), TRUE)
   DEFINES += -DGRAVITY
 endif

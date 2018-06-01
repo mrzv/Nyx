@@ -7,6 +7,7 @@ if(procmap.group() == "world")
     var nyx       = load("./Nyx3d.${compiler}.ex inputs", procmap)
     var particles = load("../Henson/extract-particles/extract-particles3d.${compiler}.ex", procmap)
     var info      = load("../Henson/amr-info/amr-info3d.${compiler}.ex", procmap)
+    var diy       = load("../Henson/diy-amr/diy-amr3d.${compiler}.ex", procmap)
     var analysis  = load("../Henson/sample-analysis/sample-analysis3d.${compiler}.ex", procmap)
 
     puts("Puppets loaded\n")
@@ -15,6 +16,7 @@ if(procmap.group() == "world")
     {
         analysis.proceed()
         info.proceed()
+        diy.proceed()
 
         puts("Time step\n")
         particles.proceed()

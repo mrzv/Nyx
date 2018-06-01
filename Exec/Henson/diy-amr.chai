@@ -1,0 +1,17 @@
+var procmap = ProcMap()
+var nm      = NameMap()
+
+if(procmap.group() == "world")
+{
+    chdir("../AMR-density")
+    var nyx = load("./Nyx3d.${compiler}.ex inputs", procmap)
+    var diy = load("../Henson/diy-amr/diy-amr3d.${compiler}.ex", procmap)
+
+    puts("Puppets loaded\n")
+
+    while(nyx.proceed())
+    {
+        puts("Time step\n")
+        diy.proceed()
+    }
+}
