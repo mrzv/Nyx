@@ -36,6 +36,7 @@ ifeq ($(USE_HENSON), TRUE)
   LDFLAGS += -shared -Wl,--export-dynamic -Wl,-u,henson_set_contexts,-u,henson_set_namemap
   INCLUDE_LOCATIONS += $(HENSON_INCLUDE_DIR)
   LIBRARIES += $(HENSON_LIBRARY) $(HENSON_LIBPMPI)
+  USERSuffix += .HENSON
 endif
 
 ifeq ($(USE_GRAV), TRUE)
