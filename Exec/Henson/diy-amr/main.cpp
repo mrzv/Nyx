@@ -20,7 +20,7 @@ using Block = FabBlock<amrex::Real>;
 
 diy::AMRLink::Bounds bounds(const amrex::Box& box)
 {
-    diy::AMRLink::Bounds bounds;
+    diy::AMRLink::Bounds bounds(3);
     for (int i = 0; i < 3; ++i)
     {
         bounds.min[i] = box.loVect()[i];
